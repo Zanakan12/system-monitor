@@ -49,3 +49,48 @@ const char *getOsName()
     return "Other";
 #endif
 }
+
+// getComputerName, will give the computer Name in return
+const char* getComputerName() {
+#ifdef _WIN32
+    static char computerName[256];
+    DWORD size = sizeof(computerName);
+    if (GetComputerNameA(computerName, &size)) {
+        return computerName;
+    } else {
+        return "Unknown Computer";
+    }
+#else
+    static char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) == 0) {
+        return hostname;
+    } else {
+        return "Unknown Hostname";
+    }
+#endif
+}
+
+// Procesor information
+std::string getProcessorInfo() {
+    std::string info;
+#ifdef _WIN32
+    // Sur Windows, vous pouvez utiliser des appels à l'API Windows
+    SYSTEM_INFO sysInfo;
+    GetSystemInfo(&sysInfo);
+    info = "Processor architecture: " + std::to_string(sysInfo.wProcessorArchitecture);
+#else
+    // Sur Linux, lisez /proc/cpuinfo
+    std::ifstream cpuInfo("/proc/cpuinfo");
+    std::string line;
+    while (std::getline(cpuInfo, line)) {
+        if (line.find("model name") != std::string::npos) {
+            info = line; // Stocke la première ligne qui correspond
+            break;
+        }
+    }
+    if (info.empty()) {
+        info = "Processor information not found.";
+    }
+#endif
+    return info;
+}
