@@ -169,23 +169,50 @@ int getActiveProcessCount() {
     return running; // Return total number of active processes
 }
 
+std::string readFile(const std::string& filePath)
+{
+    std::ifstream file(filePath);
+    if (!file.is_open())
+        return "N/A";
+    
+    std::string line;
+    std::getline(file, line);
+    return line;
+}
 
+// Function to get CPU information
+std::string getCPUInfo()
+{
+    return readFile("/proc/cpuinfo"); // Simplified for the example, you'd need to parse the info
+}
 
-std::string getProcessorTemperature() {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::string command = "sensors | grep 'Core 0'"; // Change 'Core 0' si nécessaire
+// Function to get temperature
+std::string getTemperature()
+{
+    return readFile("/sys/class/thermal/thermal_zone1/temp");
+}
 
-    // Exécute la commande et capture la sortie
-    std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
-    if (!pipe) {
-        std::cerr << "Erreur : impossible d'exécuter la commande." << std::endl;
-        return "Erreur.";
+// Function to get fan speed
+std::string getFanSpeed()
+{
+    return readFile("/sys/class/hwmon/hwmon0/fan1_input");
+}
+
+void updateTemperatureData(float newTemperature)
+{
+    temperatureData[temperatureIndex] = newTemperature;
+    temperatureIndex = (temperatureIndex + 1) % 100; // Circular buffer
+}
+
+float getFanSpeed(int fanNumber) {
+    std::string path = "/sys/class/hwmon/hwmon0/fan" + std::to_string(fanNumber) + "_input"; // Assure-toi que le numéro de hwmon et fan est correct
+    std::ifstream file(path);
+    float speed = 0.0f;
+
+    if (file.is_open()) {
+        file >> speed;
+        file.close();
     }
 
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-
-    return result;
+    return speed; 
 }

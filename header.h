@@ -2,7 +2,7 @@
 #ifndef header_H
 #define header_H
 
-
+#include <cstdlib>
 #include <cstdio>
 #include <string>
 #include <array>
@@ -112,11 +112,11 @@ struct RX
     int compressed;
 };
 extern int fps;
-extern int fps;
 extern bool animate;
 extern float scalemax;
 extern float temperatureData[100]; // Array to store temperature values
 extern int temperatureIndex;
+extern std::string item1;
 // student TODO : system stats
 string CPUinfo();
 const char *getOsName();
@@ -126,8 +126,9 @@ int getActiveProcessCount();
 std::string getProcessorInfo();
 std::string readFile(const std::string& filePath);
 std::string getCPUInfo();
-std::string getFanSpeed();
-std::string getProcessorTemperature();
+std::string getTemperature();
+float getFanSpeed(int fanNumber);
+std::string getCpuTemperature();
 // student TODO : network
 
 #endif

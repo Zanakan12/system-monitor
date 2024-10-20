@@ -1,36 +1,43 @@
-#include <iostream>
-#include <cstdlib>
-#include <cstdio>
+#include "header.h"
+#include <vector>
+#include <fstream>
 #include <string>
-#include <array>
-#include <memory>      // Pour std::shared_ptr
-#include <thread>      // Pour std::this_thread
-#include <chrono>      // Pour std::chrono
+#include <iostream>
 
-std::string getProcessorTemperature() {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::string command = "sensors | grep 'Core 0'"; // Change 'Core 0' si nécessaire
-
-    // Exécute la commande et capture la sortie
-    std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
-    if (!pipe) {
-        std::cerr << "Erreur : impossible d'exécuter la commande." << std::endl;
-        return "Erreur.";
+// Fonction pour obtenir la température du CPU à partir de /proc (exemple basique)
+float getCPUTemperature() {
+    std::ifstream file("/sys/class/thermal/thermal_zone0/temp");
+    if (!file.is_open()) {
+        std::cerr << "Erreur : Impossible d'ouvrir le fichier de température\n";
+        return 0.0f;
     }
-
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-
-    return result;
+    float temp;
+    file >> temp;
+    file.close();
+    return temp / 1000.0f; // Diviser par 1000 si la valeur est en millidegrés
 }
 
 int main() {
+    // Stocker les températures
+    std::vector<float> temps(100, 0.0f); // On garde les 100 dernières mesures
+    
+    // Boucle principale du programme
     while (true) {
-        std::string temperature = getProcessorTemperature();
-        std::cout << "Température du processeur : " << temperature << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // Attendre 2 secondes avant la prochaine lecture
+        // Obtenir la température actuelle
+        float currentTemp = getCPUTemperature();
+        
+        // Ajouter la nouvelle température à la fin du tableau, en supprimant la plus ancienne
+        temps.erase(temps.begin());
+        temps.push_back(currentTemp);
+        
+        // Afficher l'interface ImGui
+        ImGui::Begin("Température du CPU");
+        ImGui::PlotLines("Température", temps.data(), temps.size());
+        ImGui::End();
+        
+        // Rafraîchir l'interface graphique (cette partie dépend de ton implémentation globale)
+        // Exemple: ImGui::Render();
     }
+    
     return 0;
 }

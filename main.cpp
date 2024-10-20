@@ -43,69 +43,61 @@ using namespace gl;
 
 int fps = 60;
 bool animate = false;
-float scalemax=100.0f;
-float temperatureData[100]; // Array to store temperature values
-int temperatureIndex = 0;
-string item1;
-string item2;
-std::string temperature = getProcessorTemperature();// Convert to Celsius
-// systemWindow, display information for the system monitorization
-void systemWindow(const char *id, ImVec2 size, ImVec2 position)
-{
+float scalemax = 100.0f;
+float temperatureData[100] = {0}; // Tableau pour stocker les températures
+int temperatureIndex = 0; // Index circulaire pour les données de température
+std::string item1; // Utilisation de la variable item1
+
+// systemWindow, affichage des informations système
+void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
 
-    // student TODO : add code here for the system window
     ImGui::Text("Operating system: %s", getOsName());
     ImGui::Text("Computer name: %s", getComputerName());
-    ImGui::Text("Logged in user: %s", getenv("USER") ? getenv("USER") : getenv("USERNAME"));  // USER pour Linux/Mac, USERNAME pour Windows
-    // Convert the std::string to const char* using c_str() for proper display in ImGui
+    ImGui::Text("Logged in user: %s", getenv("USER") ? getenv("USER") : getenv("USERNAME"));
     ImGui::Text("Number of working process: %d", getActiveProcessCount());
     ImGui::Text("Processor: %s", getProcessorInfo().c_str());
-    /////
-    ImGui::Separator();
-    ///
-    if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None))
-{
 
-    
-    if (ImGui::BeginTabItem("CPU"))
-    {
-        // Content of Tab 1
-        ImGui::EndTabItem();
+    ImGui::Separator();
+    float temperature = std::stof(getTemperature()) / 1000.0f; // Conversion en Celsius
+
+    // Mettre à jour les données de température dans le tableau
+    temperatureData[temperatureIndex] = temperature;
+    temperatureIndex = (temperatureIndex + 1) % 100; // Index circulaire
+
+    if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None)) {
+        if (ImGui::BeginTabItem("CPU")) {
+            item1 = "CPU";
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Fan")) {
+            item1 = "Fan";
+            ImGui::Text("Fan status :");
+            ImGui::Text("Status : ");
+            ImGui::Text("Speed : ");
+            ImGui::Text("Level : ");
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Thermal")) {
+            ImGui::Text("Temperature : %.f°C", temperature);
+            item1 = "Temperature";
+            ImGui::EndTabItem();
+        }
+
+        ImGui::Checkbox("Animate", &animate);
+        if (animate) {
+            ImGui::SliderInt("FPS", &fps, 0, 60);
+            ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
+
+            // Affichage du graphique avec la courbe de température, échelle min à 0
+            ImGui::PlotLines(item1.c_str(), temperatureData, 10, temperatureIndex, nullptr, 0.0f, scalemax, ImVec2(0, 100));
+        }
+
+        ImGui::EndTabBar();
     }
-    if (ImGui::BeginTabItem("Fan"))
-    {
-    
-        // Content of Tab 2
-        ImGui::Text("Fan status :");
-        ImGui::Text("Status : ");
-        ImGui::Text("Speed : ");
-        ImGui::Text("Level : ");
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Thermal"))
-    {
-        // Content of Tab 2
-        ImGui::Text("Temperature : %s",temperature.c_str(),"°C");
-        item1 = "Temperature";
-        item2 = temperature;
-        ImGui::EndTabItem();
-    }
-    
-    ImGui::Checkbox("Animate", &animate);
-    if (animate) {
-    ImGui::SliderInt("FPS", &fps, 30, 144);
-    ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
-    ImGui::PlotLines("CPU Temperature", temperatureData, 100, 0, NULL, 0.0f, 100.0f, ImVec2(400, 200));
-}
-    
-    ImGui::EndTabBar();
-}
-    
-    
-    //ImGui::ShowDemoWindow();
+
     ImGui::End();
 }
 
