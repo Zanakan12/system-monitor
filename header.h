@@ -1,6 +1,11 @@
 // To make sure you don't declare the function more than once by including the header multiple times.
 #ifndef header_H
 #define header_H
+
+#ifdef _WIN32
+#include <windows.h>
+#include <tlhelp32.h>
+#endif
 #include <cstdlib>
 #include <cstring>
 #include <SDL2/SDL.h>
@@ -100,12 +105,13 @@ struct RX
     int carrier;
     int compressed;
 };
-
+extern int fps;
 // student TODO : system stats
 string CPUinfo();
 const char *getOsName();
 const char* getComputerName();
 // student TODO : memory and processes
+int getActiveProcessCount();
 std::string getProcessorInfo();
 // student TODO : network
 

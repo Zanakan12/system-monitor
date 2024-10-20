@@ -44,17 +44,19 @@ using namespace gl;
 // systemWindow, display information for the system monitorization
 void systemWindow(const char *id, ImVec2 size, ImVec2 position)
 {
+    int fps = 60;
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
 
     // student TODO : add code here for the system window
-    ImGui::Text("Operating system:%s", getOsName());
-    ImGui::Text("Computer name:%s", getComputerName());
+    ImGui::Text("Operating system: %s", getOsName());
+    ImGui::Text("Computer name: %s", getComputerName());
     ImGui::Text("Logged in user: %s", getenv("USER") ? getenv("USER") : getenv("USERNAME"));  // USER pour Linux/Mac, USERNAME pour Windows
     // Convert the std::string to const char* using c_str() for proper display in ImGui
+    ImGui::Text("Number of working process: %d", getActiveProcessCount());
     ImGui::Text("Processor: %s", getProcessorInfo().c_str());
-
+    ImGui::SliderInt("FPS",&fps,30,144);
 
     //
     ImGui::End();

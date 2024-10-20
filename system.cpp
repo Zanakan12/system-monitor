@@ -116,3 +116,55 @@ std::string getProcessorInfo() {
     return info;
 }
 
+
+
+   #include <iostream>
+#include <fstream>
+#include <dirent.h>
+#include <sys/types.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <tlhelp32.h>
+#endif
+
+int getActiveProcessCount() {
+    int running = 0;
+
+#ifdef _WIN32
+    // Windows implementation
+    HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_PROCESS, 0);
+    if (hProcessSnap == INVALID_HANDLE_VALUE) {
+        return -1; // Indicate an error
+    }
+
+    PROCESSENTRY32 pe32;
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hProcessSnap, &pe32)) {
+        do {
+            running++; // Count each process
+        } while (Process32Next(hProcessSnap, &pe32));
+    }
+
+    CloseHandle(hProcessSnap);
+
+#else
+    // Linux implementation
+    DIR* dir = opendir("/proc");
+    struct dirent* entry;
+
+    if (dir == nullptr) {
+        return -1; // Indicate an error
+    }
+
+    while ((entry = readdir(dir)) != nullptr) {
+        if (isdigit(entry->d_name[0])) {  // Check if the directory name is a PID (a running process)
+            running++; // Count each process
+        }
+    }
+    closedir(dir);
+#endif
+
+    return running; // Return total number of active processes
+}
