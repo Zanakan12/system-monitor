@@ -7,10 +7,11 @@ Ce projet vise à surveiller les ressources du système, notamment :
 - SWAP
 - Ventilateur
 - Réseau
-![system](https://github.com/user-attachments/assets/038d01b7-b5f8-4f4e-8adf-19083155a82b)
+
 
 Il utilise **Dear ImGui** pour l'interface graphique et le système de fichiers **/proc** pour obtenir des informations sur le système. Le projet inclut des fonctionnalités spécifiques telles que des sections avec onglets, des graphiques et des affichages visuels.
-
+![system](https://github.com/user-attachments/assets/038d01b7-b5f8-4f4e-8adf-19083155a82b)
+![mem](https://github.com/user-attachments/assets/defbc637-f1d6-471c-a012-7a7ed59a6d94)
 
 ## Guide Étape par Étape
 
