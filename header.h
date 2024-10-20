@@ -2,6 +2,12 @@
 #ifndef header_H
 #define header_H
 
+
+#include <cstdio>
+#include <string>
+#include <array>
+#include <memory>      // Pour std::shared_ptr
+#include <thread> 
 #ifdef _WIN32
 #include <windows.h>
 #include <tlhelp32.h>
@@ -106,6 +112,11 @@ struct RX
     int compressed;
 };
 extern int fps;
+extern int fps;
+extern bool animate;
+extern float scalemax;
+extern float temperatureData[100]; // Array to store temperature values
+extern int temperatureIndex;
 // student TODO : system stats
 string CPUinfo();
 const char *getOsName();
@@ -113,6 +124,10 @@ const char* getComputerName();
 // student TODO : memory and processes
 int getActiveProcessCount();
 std::string getProcessorInfo();
+std::string readFile(const std::string& filePath);
+std::string getCPUInfo();
+std::string getFanSpeed();
+std::string getProcessorTemperature();
 // student TODO : network
 
 #endif

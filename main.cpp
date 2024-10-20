@@ -42,6 +42,13 @@ using namespace gl;
 #endif
 
 int fps = 60;
+bool animate = false;
+float scalemax=100.0f;
+float temperatureData[100]; // Array to store temperature values
+int temperatureIndex = 0;
+string item1;
+string item2;
+std::string temperature = getProcessorTemperature();// Convert to Celsius
 // systemWindow, display information for the system monitorization
 void systemWindow(const char *id, ImVec2 size, ImVec2 position)
 {
@@ -56,9 +63,49 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position)
     // Convert the std::string to const char* using c_str() for proper display in ImGui
     ImGui::Text("Number of working process: %d", getActiveProcessCount());
     ImGui::Text("Processor: %s", getProcessorInfo().c_str());
-    ImGui::SliderInt("FPS",&fps,30,144);
+    /////
+    ImGui::Separator();
+    ///
+    if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None))
+{
 
-    //
+    
+    if (ImGui::BeginTabItem("CPU"))
+    {
+        // Content of Tab 1
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Fan"))
+    {
+    
+        // Content of Tab 2
+        ImGui::Text("Fan status :");
+        ImGui::Text("Status : ");
+        ImGui::Text("Speed : ");
+        ImGui::Text("Level : ");
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Thermal"))
+    {
+        // Content of Tab 2
+        ImGui::Text("Temperature : %s",temperature.c_str(),"°C");
+        item1 = "Temperature";
+        item2 = temperature;
+        ImGui::EndTabItem();
+    }
+    
+    ImGui::Checkbox("Animate", &animate);
+    if (animate) {
+    ImGui::SliderInt("FPS", &fps, 30, 144);
+    ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
+    ImGui::PlotLines("CPU Temperature", temperatureData, 100, 0, NULL, 0.0f, 100.0f, ImVec2(400, 200));
+}
+    
+    ImGui::EndTabBar();
+}
+    
+    
+    //ImGui::ShowDemoWindow();
     ImGui::End();
 }
 

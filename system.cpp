@@ -168,3 +168,24 @@ int getActiveProcessCount() {
 
     return running; // Return total number of active processes
 }
+
+
+
+std::string getProcessorTemperature() {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::string command = "sensors | grep 'Core 0'"; // Change 'Core 0' si nécessaire
+
+    // Exécute la commande et capture la sortie
+    std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
+    if (!pipe) {
+        std::cerr << "Erreur : impossible d'exécuter la commande." << std::endl;
+        return "Erreur.";
+    }
+
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+
+    return result;
+}
