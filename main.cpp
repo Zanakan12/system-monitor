@@ -1,5 +1,5 @@
 #include "header.h"
-#include <SDL.h>
+
 
 /*
 NOTE : You are free to change the code as you wish, the main objective is to make the
@@ -52,7 +52,9 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::Text("Operating system:%s", getOsName());
     ImGui::Text("Computer name:%s", getComputerName());
     ImGui::Text("Logged in user: %s", getenv("USER") ? getenv("USER") : getenv("USERNAME"));  // USER pour Linux/Mac, USERNAME pour Windows
-    ImGui::Text("Processor: %s", getProcessorInfo());
+    // Convert the std::string to const char* using c_str() for proper display in ImGui
+    ImGui::Text("Processor: %s", getProcessorInfo().c_str());
+
 
     //
     ImGui::End();

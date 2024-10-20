@@ -3,6 +3,7 @@
 #define header_H
 #include <cstdlib>
 #include <cstring>
+#include <SDL2/SDL.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif

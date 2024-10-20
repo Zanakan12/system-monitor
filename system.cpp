@@ -70,27 +70,49 @@ const char* getComputerName() {
 #endif
 }
 
+
 // Procesor information
 std::string getProcessorInfo() {
     std::string info;
+
 #ifdef _WIN32
-    // Sur Windows, vous pouvez utiliser des appels à l'API Windows
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
-    info = "Processor architecture: " + std::to_string(sysInfo.wProcessorArchitecture);
+
+    switch (sysInfo.wProcessorArchitecture) {
+        case PROCESSOR_ARCHITECTURE_AMD64:
+            info = "Processor architecture: x64 (AMD or Intel)";
+            break;
+        case PROCESSOR_ARCHITECTURE_INTEL:
+            info = "Processor architecture: x86";
+            break;
+        case PROCESSOR_ARCHITECTURE_ARM:
+            info = "Processor architecture: ARM";
+            break;
+        default:
+            info = "Unknown processor architecture";
+            break;
+    }
 #else
-    // Sur Linux, lisez /proc/cpuinfo
     std::ifstream cpuInfo("/proc/cpuinfo");
     std::string line;
-    while (std::getline(cpuInfo, line)) {
-        if (line.find("model name") != std::string::npos) {
-            info = line; // Stocke la première ligne qui correspond
-            break;
+
+    if (cpuInfo.is_open()) {
+        while (std::getline(cpuInfo, line)) {
+            if (line.find("model name") != std::string::npos) {
+                info = line.substr(line.find(":") + 2);
+                break;
+            }
         }
+        cpuInfo.close();
+    } else {
+        info = "Could not open /proc/cpuinfo.";
     }
+
     if (info.empty()) {
         info = "Processor information not found.";
     }
 #endif
     return info;
 }
+
