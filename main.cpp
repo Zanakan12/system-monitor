@@ -1,5 +1,5 @@
 #include "header.h"
-#include <SDL.h>
+
 
 /*
 NOTE : You are free to change the code as you wish, the main objective is to make the
@@ -49,7 +49,14 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::SetWindowPos(id, position);
 
     // student TODO : add code here for the system window
+    ImGui::Text("Operating system:%s", getOsName());
+    ImGui::Text("Computer name:%s", getComputerName());
+    ImGui::Text("Logged in user: %s", getenv("USER") ? getenv("USER") : getenv("USERNAME"));  // USER pour Linux/Mac, USERNAME pour Windows
+    // Convert the std::string to const char* using c_str() for proper display in ImGui
+    ImGui::Text("Processor: %s", getProcessorInfo().c_str());
 
+
+    //
     ImGui::End();
 }
 
@@ -71,7 +78,6 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
-
     // student TODO : add code here for the network information
 
     ImGui::End();

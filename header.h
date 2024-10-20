@@ -1,7 +1,12 @@
 // To make sure you don't declare the function more than once by including the header multiple times.
 #ifndef header_H
 #define header_H
-
+#include <cstdlib>
+#include <cstring>
+#include <SDL2/SDL.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
@@ -99,9 +104,9 @@ struct RX
 // student TODO : system stats
 string CPUinfo();
 const char *getOsName();
-
+const char* getComputerName();
 // student TODO : memory and processes
-
+std::string getProcessorInfo();
 // student TODO : network
 
 #endif

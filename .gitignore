@@ -1,27 +1,30 @@
-# Binaires compilés
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+# Compiled files
+*.o
+*.out
 
-# Fichiers et dossiers spécifiques à macOS
-.DS_Store
-.AppleDouble
-.LSOverride
+# Build directories
+build/
+bin/
 
-# Fichiers de l'IDE (ajustez selon votre IDE)
-.idea/
+# Editor configuration files
 *.swp
 *.swo
-.vscode/
 
-# Fichiers de log
+# Temporary files
+*.tmp
 *.log
 
-# Fichiers d'environnement
-.env
-.env.local
+# Backup files
+*~
+*.bak
 
-# Fichiers temporaires
-/tmp/
+# ImGui directory if you don't want to track it
+imgui/lib/backend/
+imgui/lib/gl3w/
+
+# Ignore imgui.ini
+imgui.ini
+
+# Other unwanted files
+.DS_Store
+Thumbs.db
