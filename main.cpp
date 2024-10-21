@@ -108,16 +108,16 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
 
         ImGui::Checkbox("Animate", &animate);
         if (animate) {
-            ImGui::SliderInt("FPS", &fps, 0, 60);
+            ImGui::SliderInt("FPS", &fps, 1, 60);
             ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
 
             // Affichage du graphique avec la courbe de température, échelle min à 0
-           ImGui::PlotLines(item1.c_str(), temperatureData, 10, item3, nullptr, 0.0f, scalemax, ImVec2(0, 100));
+        ImGui::PlotLines(item1.c_str(), temperatureData, 10, item3, nullptr, 0.0f, scalemax, ImVec2(0, 100));
         }
 
         ImGui::EndTabBar();
     }
-
+    usleep(1000000 / fps);
     ImGui::End();
 }
 
