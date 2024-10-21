@@ -1,35 +1,5 @@
 #include "header.h"
 
-// get cpu id and information, you can use `proc/cpuinfo`
-string CPUinfo()
-{
-    char CPUBrandString[0x40];
-    unsigned int CPUInfo[4] = {0, 0, 0, 0};
-
-    // unix system
-    // for windoes maybe we must add the following
-    // __cpuid(regs, 0);
-    // regs is the array of 4 positions
-    __cpuid(0x80000000, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
-    unsigned int nExIds = CPUInfo[0];
-
-    memset(CPUBrandString, 0, sizeof(CPUBrandString));
-
-    for (unsigned int i = 0x80000000; i <= nExIds; ++i)
-    {
-        __cpuid(i, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
-
-        if (i == 0x80000002)
-            memcpy(CPUBrandString, CPUInfo, sizeof(CPUInfo));
-        else if (i == 0x80000003)
-            memcpy(CPUBrandString + 16, CPUInfo, sizeof(CPUInfo));
-        else if (i == 0x80000004)
-            memcpy(CPUBrandString + 32, CPUInfo, sizeof(CPUInfo));
-    }
-    string str(CPUBrandString);
-    return str;
-}
-
 // getOsName, this will get the OS of the current computer
 const char *getOsName()
 {
@@ -117,17 +87,6 @@ std::string getProcessorInfo() {
 }
 
 
-
-   #include <iostream>
-#include <fstream>
-#include <dirent.h>
-#include <sys/types.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#include <tlhelp32.h>
-#endif
-
 int getActiveProcessCount() {
     int running = 0;
 
@@ -180,22 +139,10 @@ std::string readFile(const std::string& filePath)
     return line;
 }
 
-// Function to get CPU information
-std::string getCPUInfo()
-{
-    return readFile("/proc/cpuinfo"); // Simplified for the example, you'd need to parse the info
-}
-
 // Function to get temperature
 std::string getTemperature()
 {
-    return readFile("/sys/class/thermal/thermal_zone1/temp");
-}
-
-// Function to get fan speed
-std::string getFanSpeed()
-{
-    return readFile("/sys/class/hwmon/hwmon0/fan1_input");
+    return readFile("/sys/class/thermal/thermal_zone0/temp");
 }
 
 void updateTemperatureData(float newTemperature)
@@ -204,15 +151,49 @@ void updateTemperatureData(float newTemperature)
     temperatureIndex = (temperatureIndex + 1) % 100; // Circular buffer
 }
 
-float getFanSpeed(int fanNumber) {
-    std::string path = "/sys/class/hwmon/hwmon0/fan" + std::to_string(fanNumber) + "_input"; // Assure-toi que le numéro de hwmon et fan est correct
-    std::ifstream file(path);
-    float speed = 0.0f;
 
-    if (file.is_open()) {
-        file >> speed;
-        file.close();
+
+std::string execCommand(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
     }
+    return result;
+}
 
-    return speed; 
+std::string getFan1Speed() {
+    // Exécute la commande sensors et capture la sortie
+    std::string output = execCommand("sensors");
+    
+    // Recherche la ligne contenant les informations de fan1
+    std::istringstream ss(output);
+    std::string line;
+    
+    while (std::getline(ss, line)) {
+        // Cherche une ligne contenant 'fan1'
+        if (line.find("CPU ") != std::string::npos) {
+            std::cout << "Info fan1 trouvée : " << line << std::endl; // Debugging : Imprime la ligne
+
+            // Extraire la valeur numérique avant "rpm"
+            std::string::size_type pos = line.find(":");
+            if (pos != std::string::npos) {
+                std::string speed = line.substr(pos + 1); // Récupère tout ce qui est après ':'
+                speed.erase(0, speed.find_first_not_of(" \t")); // Supprime les espaces initiaux
+                
+                // Trouver et extraire les chiffres avant "rpm"
+                std::string::size_type rpmPos = speed.find("RPM");
+                if (rpmPos != std::string::npos) {
+                    speed = speed.substr(0, rpmPos); // Garde tout avant "rpm"
+                    speed.erase(speed.find_last_not_of(" \t") + 1); // Supprime les espaces finaux
+                    std::cout << "Info fan1 trouvée : " << speed << std::endl;
+                    return speed;
+                }
+            }
+        }
+    }
+    
+    return "N/A";  // Retourne "N/A" si fan1 n'est pas trouvé
 }

@@ -47,6 +47,8 @@ float scalemax = 100.0f;
 float temperatureData[100] = {0}; // Tableau pour stocker les températures
 int temperatureIndex = 0; // Index circulaire pour les données de température
 std::string item1; // Utilisation de la variable item1
+std::string item2;
+std::string item3;
 
 // systemWindow, affichage des informations système
 void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
@@ -63,10 +65,6 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
     ImGui::Separator();
     float temperature = std::stof(getTemperature()) / 1000.0f; // Conversion en Celsius
 
-    // Mettre à jour les données de température dans le tableau
-    temperatureData[temperatureIndex] = temperature;
-    temperatureIndex = (temperatureIndex + 1) % 100; // Index circulaire
-
     if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None)) {
         if (ImGui::BeginTabItem("CPU")) {
             item1 = "CPU";
@@ -75,14 +73,28 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
         if (ImGui::BeginTabItem("Fan")) {
             item1 = "Fan";
             ImGui::Text("Fan status :");
-            ImGui::Text("Status : ");
-            ImGui::Text("Speed : ");
-            ImGui::Text("Level : ");
+            if (getFan1Speed()== "0")
+            {
+                ImGui::Text("Status : Disable");
+            }else
+            {
+                ImGui::Text("Status : Enable");
+            }
+            ;
+            ImGui::Text("Speed: %s RPM", getFan1Speed().c_str());
+            int number = atoi(getFan1Speed().c_str());
+            ImGui::Text("Level : %d ",number/1000);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Thermal")) {
             ImGui::Text("Temperature : %.f°C", temperature);
             item1 = "Temperature";
+            item2 = temperatureData[temperatureIndex] = temperature;
+            item3 = temperatureIndex = (temperatureIndex + 1) % 100; // Index circulaire
+            // Mettre à jour les données de température dans le tableau
+            
+        
+
             ImGui::EndTabItem();
         }
 

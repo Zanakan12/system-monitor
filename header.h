@@ -2,6 +2,9 @@
 #ifndef header_H
 #define header_H
 
+
+#include <algorithm>
+#include <sstream>
 #include <cstdlib>
 #include <cstdio>
 #include <string>
@@ -118,17 +121,16 @@ extern float temperatureData[100]; // Array to store temperature values
 extern int temperatureIndex;
 extern std::string item1;
 // student TODO : system stats
-string CPUinfo();
 const char *getOsName();
 const char* getComputerName();
 // student TODO : memory and processes
 int getActiveProcessCount();
 std::string getProcessorInfo();
 std::string readFile(const std::string& filePath);
-std::string getCPUInfo();
 std::string getTemperature();
 float getFanSpeed(int fanNumber);
 std::string getCpuTemperature();
+std::string getFan1Speed();
 // student TODO : network
 
 #endif
