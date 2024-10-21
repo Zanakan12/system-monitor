@@ -108,11 +108,14 @@ endif
 %.o:imgui/lib/glad/src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-all: $(EXE)
+all: $(EXE) clean_objs
 	@echo Build complete for $(ECHO_MESSAGE)
 
 $(EXE): $(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
+clean_objs:
+	rm -f $(OBJS)
+
 clean:
-	rm -f $(EXE) $(OBJS)
+	rm -f $(OBJS)
