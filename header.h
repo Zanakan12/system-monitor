@@ -2,7 +2,6 @@
 #ifndef header_H
 #define header_H
 
-
 #include <algorithm>
 #include <sstream>
 #include <cstdlib>
@@ -120,6 +119,14 @@ extern float scalemax;
 extern float temperatureData[100]; // Array to store temperature values
 extern int temperatureIndex;
 extern std::string item1;
+extern float item2;
+extern float item3;
+
+extern std::vector<float> cpuTemperatureData; // Déclaration externe sans initialisation
+extern std::vector<float> fanSpeedData;       // Déclaration externe sans initialisation
+extern int cpuTemperatureIndex;                // Déclaration externe sans initialisation
+extern int fanSpeedIndex;  
+
 // student TODO : system stats
 const char *getOsName();
 const char* getComputerName();
