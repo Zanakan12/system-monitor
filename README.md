@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Moniteur de Système
 
 ## Objectifs et Exigences du Projet
