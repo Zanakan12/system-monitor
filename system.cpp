@@ -142,7 +142,6 @@ std::string readFile(const std::string& filePath)
 // Function to get temperature
 std::string getTemperature()
 {
-    usleep(1000000);
     return readFile("/sys/class/thermal/thermal_zone1/temp");
 }
 
