@@ -142,7 +142,8 @@ std::string readFile(const std::string& filePath)
 // Function to get temperature
 std::string getTemperature()
 {
-    return readFile("/sys/class/thermal/thermal_zone0/temp");
+    usleep(1000000);
+    return readFile("/sys/class/thermal/thermal_zone1/temp");
 }
 
 void updateTemperatureData(float newTemperature)
@@ -175,8 +176,6 @@ std::string getFan1Speed() {
     while (std::getline(ss, line)) {
         // Cherche une ligne contenant 'fan1'
         if (line.find("CPU ") != std::string::npos) {
-            std::cout << "Info fan1 trouvée : " << line << std::endl; // Debugging : Imprime la ligne
-
             // Extraire la valeur numérique avant "rpm"
             std::string::size_type pos = line.find(":");
             if (pos != std::string::npos) {
@@ -196,4 +195,40 @@ std::string getFan1Speed() {
     }
     
     return "N/A";  // Retourne "N/A" si fan1 n'est pas trouvé
+}
+
+
+float getCpuUsage() {
+    // Ouvrir le fichier /proc/stat
+    std::ifstream file("/proc/stat");
+    if (!file.is_open()) {
+        std::cerr << "Erreur lors de l'ouverture de /proc/stat" << std::endl;
+        return -1.0f;
+    }
+
+    std::string line;
+    std::getline(file, line); // Lire la première ligne
+
+    // Séparer la ligne en mots
+    std::istringstream ss(line);
+    std::string cpu;
+    std::vector<long long> values;
+    ss >> cpu; // Ignorer le premier mot "cpu"
+
+    long long value;
+    while (ss >> value) {
+        values.push_back(value);
+    }
+
+    // Calculer les valeurs d'utilisation
+    long long total = 0;
+    long long idle = values[3]; // idle est le 4ème champ
+    for (long long val : values) {
+        total += val;
+    }
+
+    // Utilisation du CPU = (total - idle) / total * 100
+    float usage = 100.0f * (total - idle) / total;
+
+    return usage;
 }

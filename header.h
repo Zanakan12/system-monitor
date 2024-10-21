@@ -120,7 +120,7 @@ extern float temperatureData[100]; // Array to store temperature values
 extern int temperatureIndex;
 extern std::string item1;
 extern float item2;
-extern float item3;
+extern int item3;
 
 extern std::vector<float> cpuTemperatureData; // Déclaration externe sans initialisation
 extern std::vector<float> fanSpeedData;       // Déclaration externe sans initialisation
@@ -138,6 +138,7 @@ std::string getTemperature();
 float getFanSpeed(int fanNumber);
 std::string getCpuTemperature();
 std::string getFan1Speed();
+float getCpuUsage();
 // student TODO : network
 
 #endif
