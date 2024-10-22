@@ -116,8 +116,8 @@ struct RX
 extern int fps;
 extern bool animate;
 extern float scalemax;
-extern float temperatureData[100]; // Array to store temperature values
-extern int temperatureIndex;
+extern float Data[100]; // Array to store temperature values
+extern int Index;
 extern std::string item1;
 extern float item2;
 extern int item3;

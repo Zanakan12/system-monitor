@@ -44,8 +44,8 @@ using namespace gl;
 int fps = 60;
 bool animate = true;
 float scalemax = 100.0f;
-float temperatureData[100] = {0}; // Tableau pour stocker les températures
-int temperatureIndex = 0; // Index circulaire pour les données de température
+float Data[100] = {0}; // Tableau pour stocker les températures
+int Index = 0; // Index circulaire pour les données de température
 std::string item1; // Utilisation de la variable item1
 float item2;
 int item3;
@@ -72,8 +72,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             if (cpuUsage >= 0) {
                  std::cout << "Utilisation du CPU : " << cpuUsage << "%" << std::endl;
              }
-            item2 = temperatureData[temperatureIndex] =cpuUsage ;
-            item3 = temperatureIndex = (temperatureIndex + 1) % 1000; 
+            item2 = Data[Index] =cpuUsage ;
+            item3 = Index = (Index + 1) % 1000; 
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Fan")) {
@@ -91,18 +91,18 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             ImGui::Text("Speed: %s RPM", getFan1Speed().c_str());
             int number = atoi(getFan1Speed().c_str());
             ImGui::Text("Level : %d ",number/1000);
-            item2 = temperatureData[temperatureIndex] = float(number);
-            item3 = temperatureIndex = (temperatureIndex + 1) % 100;            
-            //ImGui::PlotLines(item1.c_str(), temperatureData, 10, float(number), nullptr, 0.0f, scalemax, ImVec2(0, 100));
+            item2 = Data[Index] = float(number)/100;
+            item3 = Index = (Index + 1) % 100;            
+            //ImGui::PlotLines(item1.c_str(), Data, 10, float(number), nullptr, 0.0f, scalemax, ImVec2(0, 100));
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Thermal")) {
             ImGui::Text("Temperature : %.f°C", temperature);
             item1 = "Temperature";
-            item2 = temperatureData[temperatureIndex] = temperature;
-            item3 = temperatureIndex = (temperatureIndex + 1) % 100; // Index circulaire
+            item2 = Data[Index] = temperature;
+            item3 = Index = (Index + 1) % 100; // Index circulaire
             // Mettre à jour les données de température dans le tableau
-           //ImGui::PlotLines(item1.c_str(), temperatureData, 10, temperatureIndex, nullptr, 0.0f, scalemax, ImVec2(0, 100));
+           //ImGui::PlotLines(item1.c_str(), Data, 10, Index, nullptr, 0.0f, scalemax, ImVec2(0, 100));
             ImGui::EndTabItem();
         }
 
@@ -112,12 +112,13 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
 
             // Affichage du graphique avec la courbe de température, échelle min à 0
-        ImGui::PlotLines(item1.c_str(), temperatureData, 10, item3, nullptr, 0.0f, scalemax, ImVec2(0, 100));
+        usleep(1000000 / fps);
+        ImGui::PlotLines(item1.c_str(), Data, 50, item3, nullptr, 0.0f, scalemax, ImVec2(0, 200));
         }
 
         ImGui::EndTabBar();
     }
-    usleep(1000000 / fps);
+    
     ImGui::End();
 }
 

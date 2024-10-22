@@ -147,8 +147,8 @@ std::string getTemperature()
 
 void updateTemperatureData(float newTemperature)
 {
-    temperatureData[temperatureIndex] = newTemperature;
-    temperatureIndex = (temperatureIndex + 1) % 100; // Circular buffer
+    Data[Index] = newTemperature;
+    Index = (Index + 1) % 100; // Circular buffer
 }
 
 
@@ -228,6 +228,5 @@ float getCpuUsage() {
 
     // Utilisation du CPU = (total - idle) / total * 100
     float usage = 100.0f * (total - idle) / total;
-
     return usage;
 }
