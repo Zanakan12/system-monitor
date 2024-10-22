@@ -2,13 +2,14 @@
 #ifndef header_H
 #define header_H
 
+#include <iomanip>
 #include <algorithm>
 #include <sstream>
 #include <cstdlib>
 #include <cstdio>
 #include <string>
 #include <array>
-#include <memory>      // Pour std::shared_ptr
+#include <memory>
 #include <thread> 
 #ifdef _WIN32
 #include <windows.h>
@@ -121,11 +122,12 @@ extern int Index;
 extern std::string item1;
 extern float item2;
 extern int item3;
-
+extern std::string graphTitle;
 extern std::vector<float> cpuTemperatureData; // Déclaration externe sans initialisation
 extern std::vector<float> fanSpeedData;       // Déclaration externe sans initialisation
 extern int cpuTemperatureIndex;                // Déclaration externe sans initialisation
 extern int fanSpeedIndex;  
+extern std::ostringstream stream;
 
 // student TODO : system stats
 const char *getOsName();

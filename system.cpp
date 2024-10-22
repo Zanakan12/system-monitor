@@ -90,7 +90,7 @@ std::string getProcessorInfo() {
 int getActiveProcessCount() {
     int running = 0;
 
-#ifdef _WIN32
+#ifdef _WIN32 || _WIN64
     // Windows implementation
     HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_PROCESS, 0);
     if (hProcessSnap == INVALID_HANDLE_VALUE) {

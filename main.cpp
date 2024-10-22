@@ -40,15 +40,23 @@ using namespace gl;
 #else
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
+#include <sstream>
+#include <iomanip> // Pour std::setprecision
+#include <string>
+#include <cstdlib> // Pour atoi
 
-int fps = 60;
-bool animate = true;
-float scalemax = 100.0f;
-float Data[100] = {0}; // Tableau pour stocker les températures
-int Index = 0; // Index circulaire pour les données de température
-std::string item1; // Utilisation de la variable item1
+// Déclaration globale
+const int maxDataPoints = 100;  // Taille maximale du tableau
+float Data[maxDataPoints] = {0}; // Tableau pour stocker les températures
+int Index = 0;                   // Index circulaire pour les données de température
+int dataCount = 0;               // Compteur pour le nombre de points de données
+int fps = 60;                    // Taux de rafraîchissement
+bool animate = true;             // Animation activée
+float scalemax = 100.0f;         // Échelle maximale
+std::string item1;               // Utilisation de la variable item1
 float item2;
-int item3;
+std::string graphTitle;
+std::ostringstream stream;
 
 // systemWindow, affichage des informations système
 void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
@@ -59,7 +67,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
     ImGui::Text("Operating system: %s", getOsName());
     ImGui::Text("Computer name: %s", getComputerName());
     ImGui::Text("Logged in user: %s", getenv("USER") ? getenv("USER") : getenv("USERNAME"));
-    ImGui::Text("Number of working process: %d", getActiveProcessCount());
+    ImGui::Text("Number of working processes: %d", getActiveProcessCount());
     ImGui::Text("Processor: %s", getProcessorInfo().c_str());
 
     ImGui::Separator();
@@ -70,39 +78,65 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             item1 = "CPU";
             float cpuUsage = getCpuUsage();
             if (cpuUsage >= 0) {
-                 std::cout << "Utilisation du CPU : " << cpuUsage << "%" << std::endl;
-             }
-            item2 = Data[Index] =cpuUsage ;
-            item3 = Index = (Index + 1) % 1000; 
+                std::cout << "Utilisation du CPU : " << cpuUsage << "%" << std::endl; // debug
+            }
+            item2 = Data[Index] = cpuUsage;
+            Index = (Index + 1) % maxDataPoints;
+
+            if (dataCount < maxDataPoints) {
+                dataCount++;  // Augmenter le nombre de points disponibles
+            }
+
+            // Réinitialisation du flux
+            stream.str(""); // Réinitialise le flux
+            stream << std::fixed << std::setprecision(2) << item2;
+            graphTitle = item1 + ": " + stream.str() + "%";
+
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Fan")) {
             item1 = "Fan";
             ImGui::Text("Fan status :");
             ImGui::Text("");
-            if (getFan1Speed()== "0")
-            {
+            if (getFan1Speed() == "0") {
                 ImGui::Text("Status : Disable");
-            }else
-            {
+            } else {
                 ImGui::Text("Status : Enable");
             }
-            ;
             ImGui::Text("Speed: %s RPM", getFan1Speed().c_str());
+
             int number = atoi(getFan1Speed().c_str());
-            ImGui::Text("Level : %d ",number/1000);
-            item2 = Data[Index] = float(number)/100;
-            item3 = Index = (Index + 1) % 100;            
-            //ImGui::PlotLines(item1.c_str(), Data, 10, float(number), nullptr, 0.0f, scalemax, ImVec2(0, 100));
+            ImGui::Text("Level : %d ", number);
+
+            item2 = Data[Index] = float(number);
+            Index = (Index + 1) % maxDataPoints;
+
+            if (dataCount < maxDataPoints) {
+                dataCount++;  // Augmenter le nombre de points disponibles
+            }
+
+            // Réinitialisation du flux
+            stream.str(""); // Réinitialise le flux
+            stream << std::fixed << std::setprecision(2) << item2;
+            graphTitle = item1 + ": " + stream.str() + " RPM";
+
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Thermal")) {
             ImGui::Text("Temperature : %.f°C", temperature);
             item1 = "Temperature";
             item2 = Data[Index] = temperature;
-            item3 = Index = (Index + 1) % 100; // Index circulaire
-            // Mettre à jour les données de température dans le tableau
-           //ImGui::PlotLines(item1.c_str(), Data, 10, Index, nullptr, 0.0f, scalemax, ImVec2(0, 100));
+            Index = (Index + 1) % maxDataPoints;
+
+            if (dataCount < maxDataPoints) {
+                dataCount++;  // Augmenter le nombre de points disponibles
+            }
+
+            // Réinitialisation du flux
+            stream.str(""); // Réinitialise le flux
+            stream << std::fixed << std::setprecision(2) << item2;
+            graphTitle = item1 + ": " + stream.str() + "°C";
+
             ImGui::EndTabItem();
         }
 
@@ -111,14 +145,15 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             ImGui::SliderInt("FPS", &fps, 1, 60);
             ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
 
-            // Affichage du graphique avec la courbe de température, échelle min à 0
-        usleep(1000000 / fps);
-        ImGui::PlotLines(item1.c_str(), Data, 50, item3, nullptr, 0.0f, scalemax, ImVec2(0, 200));
+            usleep(1000000 / fps);
+
+            // Affichage du graphique avec les données accumulées
+            ImGui::PlotLines(item1.c_str(), Data, dataCount, Index, graphTitle.c_str(), 0.0f, scalemax, ImVec2(0, 180));
         }
 
         ImGui::EndTabBar();
     }
-    
+
     ImGui::End();
 }
 
