@@ -45,10 +45,15 @@ using namespace gl;
 #include <string>
 #include <cstdlib> // Pour atoi
 
+#include <sstream>
+#include <iomanip>
+#include <string>
+#include <cstdlib> // Pour atoi
+
 // Déclaration globale
 const int maxDataPoints = 100;  // Taille maximale du tableau
-float Data[maxDataPoints] = {0}; // Tableau pour stocker les températures
-int Index = 0;                   // Index circulaire pour les données de température
+float Data[maxDataPoints] = {0}; // Tableau pour stocker les données
+int Index = 0;                   // Index circulaire pour les données
 int dataCount = 0;               // Compteur pour le nombre de points de données
 int fps = 60;                    // Taux de rafraîchissement
 bool animate = true;             // Animation activée
@@ -71,10 +76,16 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
     ImGui::Text("Processor: %s", getProcessorInfo().c_str());
 
     ImGui::Separator();
-    float temperature = std::stof(getTemperature()) / 1000.0f; // Conversion en Celsius
 
     if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None)) {
+
         if (ImGui::BeginTabItem("CPU")) {
+            usleep(1000000 / fps);
+            // Réinitialiser les données à chaque changement d'onglet
+            if (dataCount == 0) {
+                std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
+            }
+
             item1 = "CPU";
             float cpuUsage = getCpuUsage();
             if (cpuUsage >= 0) {
@@ -95,6 +106,12 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Fan")) {
+            usleep(1000000 / fps);
+            // Réinitialiser les données à chaque changement d'onglet
+            if (dataCount == 0) {
+                std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
+            }
+
             item1 = "Fan";
             ImGui::Text("Fan status :");
             ImGui::Text("");
@@ -106,9 +123,9 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             ImGui::Text("Speed: %s RPM", getFan1Speed().c_str());
 
             int number = atoi(getFan1Speed().c_str());
-            ImGui::Text("Level : %d ", number);
+            ImGui::Text("Level : %d ", number / 1000);
 
-            item2 = Data[Index] = float(number);
+            item2 = Data[Index] = float(number)*100/4900; // specifique param for this computer.
             Index = (Index + 1) % maxDataPoints;
 
             if (dataCount < maxDataPoints) {
@@ -117,12 +134,17 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
 
             // Réinitialisation du flux
             stream.str(""); // Réinitialise le flux
-            stream << std::fixed << std::setprecision(2) << item2;
-            graphTitle = item1 + ": " + stream.str() + " RPM";
+            stream << std::fixed << std::setprecision(2) << item2*4900/100;
+            graphTitle = item1 + ": " + getFan1Speed().c_str() + " RPM";
 
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Thermal")) {
+            // Réinitialiser les données à chaque changement d'onglet
+            if (dataCount == 0) {
+                std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
+            }
+            float temperature = std::stof(getTemperature()) / 1000.0f; // Conversion en Celsius
             ImGui::Text("Temperature : %.f°C", temperature);
             item1 = "Temperature";
             item2 = Data[Index] = temperature;
@@ -144,10 +166,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
         if (animate) {
             ImGui::SliderInt("FPS", &fps, 1, 60);
             ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
-
-            usleep(1000000 / fps);
-
             // Affichage du graphique avec les données accumulées
+            usleep(1000000 / fps);
             ImGui::PlotLines(item1.c_str(), Data, dataCount, Index, graphTitle.c_str(), 0.0f, scalemax, ImVec2(0, 180));
         }
 
@@ -163,8 +183,30 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
+    
+    float ramUsage = getRamUsage();
+    float swapUsage = getSwapUsage();
+    float diskUsage = getDiskUsage("/");
 
-    // student TODO : add code here for the memory and process information
+    ImGui::Text("Physical Memory (RAM):");
+    // Convertir le pourcentage en chaîne de caractères pour l'étiquette
+    std::ostringstream ramUsageText;
+    ramUsageText << std::fixed << std::setprecision(2) << (ramUsage * 100) << " %";
+    // Afficher la barre de progression avec l'étiquette
+    ImGui::ProgressBar(ramUsage, ImVec2(0.0f, 0.0f), ramUsageText.str().c_str());
+   
+    ImGui::Text("Virtual Memory (SWAP):");
+    std::ostringstream swapUsageText;
+    swapUsageText << std::fixed << std::setprecision(2) << (swapUsage * 100) << " %";
+    ImGui::ProgressBar(swapUsage, ImVec2(0.0f, 0.0f), swapUsageText.str().c_str());
+
+    ImGui::Text("Disk:");
+    // Convertir le pourcentage en chaîne de caractères pour l'étiquette
+    std::ostringstream diskUsageText;
+    diskUsageText << std::fixed << std::setprecision(2) << (diskUsage * 100) << " %";
+    // Afficher la barre de progression avec l'étiquette
+    ImGui::ProgressBar(diskUsage, ImVec2(0.0f, 0.0f), diskUsageText.str().c_str());
+    
 
     ImGui::End();
 }
@@ -176,7 +218,7 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
     // student TODO : add code here for the network information
-
+    ImGui::ShowDemoWindow();
     ImGui::End();
 }
 

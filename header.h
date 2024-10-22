@@ -141,6 +141,9 @@ float getFanSpeed(int fanNumber);
 std::string getCpuTemperature();
 std::string getFan1Speed();
 float getCpuUsage();
+float getRamUsage();
+float getSwapUsage();
+float getDiskUsage(const char* path);
 // student TODO : network
 
 #endif
