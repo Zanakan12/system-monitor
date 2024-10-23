@@ -185,22 +185,69 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::SetWindowPos(id, position);
     
     
-    std::pair<float, std::string> ramData = getRamUsage();
-    std::pair<float, std::string> swapData = getSwapUsage();
-    std::pair<float, std::string> diskData = getDiskUsage();
+    auto ramUsage = getRamUsage();
+    float ramUsageRatio = ramUsage.first;
+    int totalRamInt = ramUsage.second.first;
+    std::string ramUsageText = ramUsage.second.second;
+
+    auto swapData = getSwapUsage();
+    float swapUsageRatio = swapData.first;
+    float totalSwap = swapData.second.first;  // Note que tu convertis totalSwap en int ici
+    std::string swapUsageText = swapData.second.second;
+
+    auto diskData = getDiskUsage();
+    float diskUsageRatio = diskData.first;
+    float totaldisk = diskData.second.first;  // Note que tu convertis totaldisk en int ici
+    std::string diskUsageText = diskData.second.second;
+
 
     ImGui::Text("Physical Memory (RAM):");
-    ImGui::ProgressBar(ramData.first, ImVec2(0.0f, 0.0f), ramData.second.c_str());
-    ImGui::Text("0 Go                                                 %f Go", ramData.second);
+    ImGui::ProgressBar(ramUsageRatio, ImVec2(0.0f, 0.0f), ramUsageText.c_str());
+    ImGui::Text("0 Go                                                    %d Go", totalRamInt);
 
     ImGui::Text("Virtual Memory (SWAP):");
-    ImGui::ProgressBar(swapData.first, ImVec2(0.0f, 0.0f), swapData.second.c_str());
-
+    ImGui::ProgressBar(swapUsageRatio, ImVec2(0.0f, 0.0f), swapUsageText.c_str());
+    ImGui::Text("0 Go                                                    %2.f Go", totalSwap);
+    std::cout << "Taile à la sortie de la fonction :"<<totalSwap<<std::endl;
     
     ImGui::Text("Disk Usage:");
-    ImGui::ProgressBar(diskData.first, ImVec2(0.0f, 0.0f), diskData.second.c_str());
+    ImGui::ProgressBar(diskUsageRatio, ImVec2(0.0f, 0.0f), diskUsageText.c_str());
+    ImGui::Text("0 Go                                                    %2.f Go", totaldisk);
     
+    //table
     
+     if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+        // Définir les en-têtes de colonnes
+        ImGui::TableSetupColumn("PID");
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("State");
+        ImGui::TableSetupColumn("CPU (%)");
+        ImGui::TableSetupColumn("Memory (Mb)");
+        ImGui::TableHeadersRow();
+        
+        // Remplir le tableau avec les données des processus
+        for (const Process& process : processes) {
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%d", process.pid);
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%s", process.name.c_str());
+
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text("%s", process.state.c_str());
+
+            ImGui::TableSetColumnIndex(3);
+            ImGui::Text("%.2f", process.cpuUsage);
+
+            ImGui::TableSetColumnIndex(4);
+            ImGui::Text("%.2f", process.memUsage);
+        }
+
+        ImGui::EndTable();
+    }
+
 
     ImGui::End();
 }

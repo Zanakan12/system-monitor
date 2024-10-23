@@ -115,6 +115,14 @@ struct RX
     int carrier;
     int compressed;
 };
+
+struct Process {
+    int pid;
+    std::string name;
+    std::string state;
+    float cpuUsage;  // Tu peux ajouter une logique plus tard pour calculer l'usage CPU
+    float memUsage;  // Tu peux ajouter une logique plus tard pour calculer l'usage mémoire
+};
 extern int fps;
 extern bool animate;
 extern float scalemax;
@@ -129,7 +137,6 @@ extern std::vector<float> fanSpeedData;       // Déclaration externe sans initi
 extern int cpuTemperatureIndex;                // Déclaration externe sans initialisation
 extern int fanSpeedIndex;  
 extern std::ostringstream stream;
-
 // student TODO : system stats
 const char *getOsName();
 const char* getComputerName();
@@ -142,9 +149,11 @@ float getFanSpeed(int fanNumber);
 std::string getCpuTemperature();
 std::string getFan1Speed();
 float getCpuUsage();
-std::pair<float, std::pair<int, std::string>> getRamUsage() 
-std::pair<float, std::string> getDiskUsage();
-std::pair<float, std::string> getSwapUsage();
+std::vector<Process> getProcesses();
+std::vector<Process> processes;
+std::pair<float, std::pair<int, std::string>> getRamUsage();
+std::pair<float, std::pair<float, std::string>> getDiskUsage();
+std::pair<float, std::pair<float, std::string>> getSwapUsage();
 // student TODO : network
 
 #endif
