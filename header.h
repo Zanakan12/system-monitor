@@ -2,10 +2,11 @@
 #ifndef header_H
 #define header_H
 
+
+
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
-#include <cstdlib>
 #include <cstdio>
 #include <string>
 #include <array>
@@ -141,9 +142,9 @@ float getFanSpeed(int fanNumber);
 std::string getCpuTemperature();
 std::string getFan1Speed();
 float getCpuUsage();
-float getRamUsage();
-float getSwapUsage();
-float getDiskUsage(const char* path);
+std::pair<float, std::pair<int, std::string>> getRamUsage() 
+std::pair<float, std::string> getDiskUsage();
+std::pair<float, std::string> getSwapUsage();
 // student TODO : network
 
 #endif

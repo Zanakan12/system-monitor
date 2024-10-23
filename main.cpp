@@ -89,7 +89,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
             item1 = "CPU";
             float cpuUsage = getCpuUsage();
             if (cpuUsage >= 0) {
-                std::cout << "Utilisation du CPU : " << cpuUsage << "%" << std::endl; // debug
+                //std::cout << "Utilisation du CPU : " << cpuUsage << "%" << std::endl; // debug
             }
             item2 = Data[Index] = cpuUsage;
             Index = (Index + 1) % maxDataPoints;
@@ -184,28 +184,22 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
     
-    float ramUsage = getRamUsage();
-    float swapUsage = getSwapUsage();
-    float diskUsage = getDiskUsage("/");
+    
+    std::pair<float, std::string> ramData = getRamUsage();
+    std::pair<float, std::string> swapData = getSwapUsage();
+    std::pair<float, std::string> diskData = getDiskUsage();
 
     ImGui::Text("Physical Memory (RAM):");
-    // Convertir le pourcentage en chaîne de caractères pour l'étiquette
-    std::ostringstream ramUsageText;
-    ramUsageText << std::fixed << std::setprecision(2) << (ramUsage * 100) << " %";
-    // Afficher la barre de progression avec l'étiquette
-    ImGui::ProgressBar(ramUsage, ImVec2(0.0f, 0.0f), ramUsageText.str().c_str());
-   
-    ImGui::Text("Virtual Memory (SWAP):");
-    std::ostringstream swapUsageText;
-    swapUsageText << std::fixed << std::setprecision(2) << (swapUsage * 100) << " %";
-    ImGui::ProgressBar(swapUsage, ImVec2(0.0f, 0.0f), swapUsageText.str().c_str());
+    ImGui::ProgressBar(ramData.first, ImVec2(0.0f, 0.0f), ramData.second.c_str());
+    ImGui::Text("0 Go                                                 %f Go", ramData.second);
 
-    ImGui::Text("Disk:");
-    // Convertir le pourcentage en chaîne de caractères pour l'étiquette
-    std::ostringstream diskUsageText;
-    diskUsageText << std::fixed << std::setprecision(2) << (diskUsage * 100) << " %";
-    // Afficher la barre de progression avec l'étiquette
-    ImGui::ProgressBar(diskUsage, ImVec2(0.0f, 0.0f), diskUsageText.str().c_str());
+    ImGui::Text("Virtual Memory (SWAP):");
+    ImGui::ProgressBar(swapData.first, ImVec2(0.0f, 0.0f), swapData.second.c_str());
+
+    
+    ImGui::Text("Disk Usage:");
+    ImGui::ProgressBar(diskData.first, ImVec2(0.0f, 0.0f), diskData.second.c_str());
+    
     
 
     ImGui::End();

@@ -186,7 +186,7 @@ std::string getFan1Speed() {
                 if (rpmPos != std::string::npos) {
                     speed = speed.substr(0, rpmPos); // Garde tout avant "rpm"
                     speed.erase(speed.find_last_not_of(" \t") + 1); // Supprime les espaces finaux
-                    std::cout << "Info fan1 trouvée : " << speed << std::endl;
+                   // std::cout << "Info fan1 trouvée : " << speed << std::endl;
                     return speed;
                 }
             }
