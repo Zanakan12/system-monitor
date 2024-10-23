@@ -1,5 +1,5 @@
 #include "header.h"
-#include <tuple>
+
 
 
 // Fonction pour obtenir l'utilisation de la RAM
@@ -74,10 +74,9 @@ std::pair<float, std::pair<float, std::string>> getDiskUsage() {
 
 
 std::vector<Process> getProcesses() {
-    std::vector<Process> processes;
     DIR* dir = opendir("/proc");
     struct dirent* entry;
-
+    std::vector<Process> processes;
     while ((entry = readdir(dir)) != nullptr) {
         // Si l'entrée est un dossier avec un nom numérique (ce qui signifie qu'il s'agit d'un processus)
         if (entry->d_type == DT_DIR && isdigit(entry->d_name[0])) {

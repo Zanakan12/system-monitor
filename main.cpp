@@ -204,18 +204,30 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::Text("Physical Memory (RAM):");
     ImGui::ProgressBar(ramUsageRatio, ImVec2(0.0f, 0.0f), ramUsageText.c_str());
     ImGui::Text("0 Go                                                    %d Go", totalRamInt);
+    ImGui::Text("");
 
     ImGui::Text("Virtual Memory (SWAP):");
     ImGui::ProgressBar(swapUsageRatio, ImVec2(0.0f, 0.0f), swapUsageText.c_str());
     ImGui::Text("0 Go                                                    %2.f Go", totalSwap);
     std::cout << "Taile à la sortie de la fonction :"<<totalSwap<<std::endl;
+    ImGui::Text("");
     
     ImGui::Text("Disk Usage:");
     ImGui::ProgressBar(diskUsageRatio, ImVec2(0.0f, 0.0f), diskUsageText.c_str());
     ImGui::Text("0 Go                                                    %2.f Go", totaldisk);
+    ImGui::Text("");
+
+    //Search bar
     
-    //table
-    
+    if (ImGui::CollapsingHeader("Process Table")) {
+    static char searchQuery[64] = "";
+    std::vector<Process> processes = getProcesses();
+    ImGui::Text("");
+    ImGui::Separator();
+    ImGui::Text("Process Table");
+    ImGui::Text("Filter the process by name:");
+    ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
+    //table  
      if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
         // Définir les en-têtes de colonnes
         ImGui::TableSetupColumn("PID");
@@ -224,9 +236,11 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
         ImGui::TableSetupColumn("CPU (%)");
         ImGui::TableSetupColumn("Memory (Mb)");
         ImGui::TableHeadersRow();
-        
         // Remplir le tableau avec les données des processus
+        
+      
         for (const Process& process : processes) {
+            if (strstr(process.name.c_str(), searchQuery)) {
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
@@ -244,14 +258,12 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
             ImGui::TableSetColumnIndex(4);
             ImGui::Text("%.2f", process.memUsage);
         }
-
+        }
         ImGui::EndTable();
     }
-
-
+    }
     ImGui::End();
 }
-
 // network, display information network information
 void networkWindow(const char *id, ImVec2 size, ImVec2 position)
 {

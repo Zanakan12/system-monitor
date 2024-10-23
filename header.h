@@ -150,7 +150,6 @@ std::string getCpuTemperature();
 std::string getFan1Speed();
 float getCpuUsage();
 std::vector<Process> getProcesses();
-std::vector<Process> processes;
 std::pair<float, std::pair<int, std::string>> getRamUsage();
 std::pair<float, std::pair<float, std::string>> getDiskUsage();
 std::pair<float, std::pair<float, std::string>> getSwapUsage();
