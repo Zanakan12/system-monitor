@@ -218,13 +218,14 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::Text("");
 
     //Search bar
-    
+    ImGui::Separator();
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));            // Enlève la couleur de fond du header
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1, 1, 1, 0.1f));  // Couleur légèrement visible quand on passe la souris
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(1, 1, 1, 0.1f)); 
     if (ImGui::CollapsingHeader("Process Table")) {
     static char searchQuery[64] = "";
     std::vector<Process> processes = getProcesses();
     ImGui::Text("");
-    ImGui::Separator();
-    ImGui::Text("Process Table");
     ImGui::Text("Filter the process by name:");
     ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
     //table  
@@ -237,8 +238,6 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
         ImGui::TableSetupColumn("Memory (Mb)");
         ImGui::TableHeadersRow();
         // Remplir le tableau avec les données des processus
-        
-      
         for (const Process& process : processes) {
             if (strstr(process.name.c_str(), searchQuery)) {
             ImGui::TableNextRow();
@@ -253,15 +252,16 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
             ImGui::Text("%s", process.state.c_str());
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%.2f", process.cpuUsage);
+            ImGui::Text("%.2f", calculateCpuUsage(process.pid));
 
             ImGui::TableSetColumnIndex(4);
-            ImGui::Text("%.2f", process.memUsage);
+            ImGui::Text("%.f", process.memUsage/100);
         }
         }
         ImGui::EndTable();
     }
     }
+    ImGui::PopStyleColor(3);
     ImGui::End();
 }
 // network, display information network information
@@ -271,8 +271,19 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
     // student TODO : add code here for the network information
-    ImGui::ShowDemoWindow();
-    ImGui::End();
+    
+    time_t t;
+    time(&t);
+    // Convertir en un format lisible
+    struct tm *localTime = localtime(&t);
+    // Formater la date et l'heure en une chaîne de caractères
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", localTime);
+    ImGui::Text( buffer);
+    ImGui::Text(getIPv4Addresses().c_str());
+    
+    if (ImGui::CollapsingHeader("Process Table")) {}
+    ImGui::ShowDemoWindow();    ImGui::End();
 }
 
 // Main code

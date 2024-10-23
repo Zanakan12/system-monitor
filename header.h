@@ -3,8 +3,8 @@
 #define header_H
 
 
-
 #include <iomanip>
+#include <unistd.h>  // Pour sysconf(_SC_CLK_TCK)
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
@@ -81,6 +81,13 @@ struct Proc
     long long int stime;
 };
 
+struct ProcessCpuInfo {
+    long utime;
+    long stime;
+    long starttime;
+};
+
+
 struct IP4
 {
     char *name;
@@ -123,6 +130,7 @@ struct Process {
     float cpuUsage;  // Tu peux ajouter une logique plus tard pour calculer l'usage CPU
     float memUsage;  // Tu peux ajouter une logique plus tard pour calculer l'usage mémoire
 };
+
 extern int fps;
 extern bool animate;
 extern float scalemax;
@@ -149,7 +157,11 @@ float getFanSpeed(int fanNumber);
 std::string getCpuTemperature();
 std::string getFan1Speed();
 float getCpuUsage();
+ProcessCpuInfo getProcessCpuInfo(int pid);
+double getSystemUptime();
+double calculateCpuUsage(int pid);
 std::vector<Process> getProcesses();
+std::string getIPv4Addresses();
 std::pair<float, std::pair<int, std::string>> getRamUsage();
 std::pair<float, std::pair<float, std::string>> getDiskUsage();
 std::pair<float, std::pair<float, std::string>> getSwapUsage();

@@ -108,3 +108,90 @@ std::vector<Process> getProcesses() {
     closedir(dir);
     return processes;
 }
+
+
+
+ProcessCpuInfo getProcessCpuInfo(int pid) {
+    std::string statFile = "/proc/" + std::to_string(pid) + "/stat";
+    std::ifstream file(statFile);
+    ProcessCpuInfo info = {0, 0, 0};
+    
+    if (!file.is_open()) {
+        std::cerr << "Could not open file: " << statFile << std::endl;
+        return info;
+    }
+
+    std::string line;
+    std::getline(file, line);
+    std::istringstream iss(line);
+
+    std::string temp;
+    int field = 1;
+    while (iss >> temp) {
+        if (field == 14) {
+            info.utime = std::stol(temp); // 14th field is utime
+        } else if (field == 15) {
+            info.stime = std::stol(temp); // 15th field is stime
+        } else if (field == 22) {
+            info.starttime = std::stol(temp); // 22nd field is starttime
+            break; // We don't need more fields after starttime
+        }
+        field++;
+    }
+    file.close();
+    return info;
+}
+
+double getSystemUptime() {
+    std::ifstream file("/proc/uptime");
+    double uptime = 0.0;
+    
+    if (file.is_open()) {
+        file >> uptime;
+        file.close();
+    } else {
+        std::cerr << "Could not open /proc/uptime" << std::endl;
+    }
+    
+    return uptime;
+}
+
+double calculateCpuUsage(int pid) {
+    ProcessCpuInfo pInfo = getProcessCpuInfo(pid);
+    long hertz = sysconf(_SC_CLK_TCK); // Get system clock ticks per second
+    double uptime = getSystemUptime();
+
+    long total_time = pInfo.utime + pInfo.stime;
+    double seconds = uptime - (pInfo.starttime / hertz);
+
+    if (seconds > 0.0) {
+        return 100.0 * ((total_time / (double)hertz) / seconds);
+    } else {
+        return 0.0;
+    }
+}
+
+std::string getIPv4Addresses() {
+    std::string line;
+    std::string ipv4Addresses;
+
+    // Utiliser la commande 'ip addr' pour obtenir les informations réseau
+    system("ip -4 addr show > ip_output.txt");
+    
+    // Lire le fichier temporaire contenant les résultats
+    std::ifstream ipFile("ip_output.txt");
+    
+    if (ipFile.is_open()) {
+        while (std::getline(ipFile, line)) {
+            // Filtrer et stocker uniquement les lignes contenant 'inet' (adresses IPv4)
+            if (line.find("inet ") != std::string::npos) {
+                ipv4Addresses += line + "\n"; // Ajouter la ligne à la chaîne de résultats
+            }
+        }
+        ipFile.close();
+    } else {
+        return "Erreur lors de l'ouverture du fichier temporaire"; // Retourner une erreur
+    }
+
+    return ipv4Addresses.empty() ? "Aucune adresse IPv4 trouvée" : ipv4Addresses; // Retourner un message si aucune adresse n'est trouvée
+}
