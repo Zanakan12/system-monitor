@@ -78,7 +78,6 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
     ImGui::Separator();
 
     if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None)) {
-
         if (ImGui::BeginTabItem("CPU")) {
             usleep(1000000 / fps);
             // Réinitialiser les données à chaque changement d'onglet
@@ -228,8 +227,9 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::Text("");
     ImGui::Text("Filter the process by name:");
     ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
-    //table  
-     if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+    //table 
+    ImGui::SetCursorPosX((50 - 10) * 0.5f);
+    if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
         // Définir les en-têtes de colonnes
         ImGui::TableSetupColumn("PID");
         ImGui::TableSetupColumn("Name");
@@ -281,9 +281,19 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position)
     strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", localTime);
     ImGui::Text( buffer);
     ImGui::Text(getIPv4Addresses().c_str());
-    
-    if (ImGui::CollapsingHeader("Process Table")) {}
-    ImGui::ShowDemoWindow();    ImGui::End();
+    //--------------------------------------------------------------------à part 
+    if (ImGui::CollapsingHeader("Network Table")) {
+        ImGui::SetCursorPosX((50 - 10) * 0.5f);
+    if (ImGui::CollapsingHeader("FX")){
+
+        }
+    ImGui::SetCursorPosX((50 - 10) * 0.5f);    
+    if (ImGui::CollapsingHeader("TX")){
+
+    }
+    }
+    ImGui::ShowDemoWindow();    
+    ImGui::End();
 }
 
 // Main code
