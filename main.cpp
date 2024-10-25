@@ -50,129 +50,16 @@ using namespace gl;
 #include <string>
 #include <cstdlib> // Pour atoi
 
-// Déclaration globale
-const int maxDataPoints = 100;  // Taille maximale du tableau
-float Data[maxDataPoints] = {0}; // Tableau pour stocker les données
-int Index = 0;                   // Index circulaire pour les données
-int dataCount = 0;               // Compteur pour le nombre de points de données
-int fps = 60;                    // Taux de rafraîchissement
-bool animate = true;             // Animation activée
-float scalemax = 100.0f;         // Échelle maximale
-std::string item1;               // Utilisation de la variable item1
-float item2;
-std::string graphTitle;
-std::ostringstream stream;
+
 
 // systemWindow, affichage des informations système
 void systemWindow(const char *id, ImVec2 size, ImVec2 position) {
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
-
-    ImGui::Text("Operating system: %s", getOsName());
-    ImGui::Text("Computer name: %s", getComputerName());
-    ImGui::Text("Logged in user: %s", getenv("USER") ? getenv("USER") : getenv("USERNAME"));
-    ImGui::Text("Number of working processes: %d", getActiveProcessCount());
-    ImGui::Text("Processor: %s", getProcessorInfo().c_str());
-
+    displaySysInfo();
     ImGui::Separator();
-
-    if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None)) {
-        if (ImGui::BeginTabItem("CPU")) {
-            usleep(1000000 / fps);
-            // Réinitialiser les données à chaque changement d'onglet
-            if (dataCount == 0) {
-                std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
-            }
-
-            item1 = "CPU";
-            float cpuUsage = getCpuUsage();
-            if (cpuUsage >= 0) {
-                //std::cout << "Utilisation du CPU : " << cpuUsage << "%" << std::endl; // debug
-            }
-            item2 = Data[Index] = cpuUsage;
-            Index = (Index + 1) % maxDataPoints;
-
-            if (dataCount < maxDataPoints) {
-                dataCount++;  // Augmenter le nombre de points disponibles
-            }
-
-            // Réinitialisation du flux
-            stream.str(""); // Réinitialise le flux
-            stream << std::fixed << std::setprecision(2) << item2;
-            graphTitle = item1 + ": " + stream.str() + "%";
-
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("Fan")) {
-            usleep(1000000 / fps);
-            // Réinitialiser les données à chaque changement d'onglet
-            if (dataCount == 0) {
-                std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
-            }
-
-            item1 = "Fan";
-            ImGui::Text("Fan status :");
-            ImGui::Text("");
-            if (getFan1Speed() == "0") {
-                ImGui::Text("Status : Disable");
-            } else {
-                ImGui::Text("Status : Enable");
-            }
-            ImGui::Text("Speed: %s RPM", getFan1Speed().c_str());
-
-            int number = atoi(getFan1Speed().c_str());
-            ImGui::Text("Level : %d ", number / 1000);
-
-            item2 = Data[Index] = float(number)*100/4900; // specifique param for this computer.
-            Index = (Index + 1) % maxDataPoints;
-
-            if (dataCount < maxDataPoints) {
-                dataCount++;  // Augmenter le nombre de points disponibles
-            }
-
-            // Réinitialisation du flux
-            stream.str(""); // Réinitialise le flux
-            stream << std::fixed << std::setprecision(2) << item2*4900/100;
-            graphTitle = item1 + ": " + getFan1Speed().c_str() + " RPM";
-
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("Thermal")) {
-            // Réinitialiser les données à chaque changement d'onglet
-            if (dataCount == 0) {
-                std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
-            }
-            float temperature = std::stof(getTemperature()) / 1000.0f; // Conversion en Celsius
-            ImGui::Text("Temperature : %.f°C", temperature);
-            item1 = "Temperature";
-            item2 = Data[Index] = temperature;
-            Index = (Index + 1) % maxDataPoints;
-
-            if (dataCount < maxDataPoints) {
-                dataCount++;  // Augmenter le nombre de points disponibles
-            }
-
-            // Réinitialisation du flux
-            stream.str(""); // Réinitialise le flux
-            stream << std::fixed << std::setprecision(2) << item2;
-            graphTitle = item1 + ": " + stream.str() + "°C";
-
-            ImGui::EndTabItem();
-        }
-
-        ImGui::Checkbox("Animate", &animate);
-        if (animate) {
-            ImGui::SliderInt("FPS", &fps, 1, 60);
-            ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
-            // Affichage du graphique avec les données accumulées
-            usleep(1000000 / fps);
-            ImGui::PlotLines(item1.c_str(), Data, dataCount, Index, graphTitle.c_str(), 0.0f, scalemax, ImVec2(0, 180));
-        }
-
-        ImGui::EndTabBar();
-    }
-
+    displayTabBar();
     ImGui::End();
 }
 
@@ -182,86 +69,8 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
-    
-    
-    auto ramUsage = getRamUsage();
-    float ramUsageRatio = ramUsage.first;
-    int totalRamInt = ramUsage.second.first;
-    std::string ramUsageText = ramUsage.second.second;
-
-    auto swapData = getSwapUsage();
-    float swapUsageRatio = swapData.first;
-    float totalSwap = swapData.second.first;  // Note que tu convertis totalSwap en int ici
-    std::string swapUsageText = swapData.second.second;
-
-    auto diskData = getDiskUsage();
-    float diskUsageRatio = diskData.first;
-    float totaldisk = diskData.second.first;  // Note que tu convertis totaldisk en int ici
-    std::string diskUsageText = diskData.second.second;
-
-
-    ImGui::Text("Physical Memory (RAM):");
-    ImGui::ProgressBar(ramUsageRatio, ImVec2(0.0f, 0.0f), ramUsageText.c_str());
-    ImGui::Text("0 Go                                                    %d Go", totalRamInt);
-    ImGui::Text("");
-
-    ImGui::Text("Virtual Memory (SWAP):");
-    ImGui::ProgressBar(swapUsageRatio, ImVec2(0.0f, 0.0f), swapUsageText.c_str());
-    ImGui::Text("0 Go                                                    %2.f Go", totalSwap);
-    std::cout << "Taile à la sortie de la fonction :"<<totalSwap<<std::endl;
-    ImGui::Text("");
-    
-    ImGui::Text("Disk Usage:");
-    ImGui::ProgressBar(diskUsageRatio, ImVec2(0.0f, 0.0f), diskUsageText.c_str());
-    ImGui::Text("0 Go                                                    %2.f Go", totaldisk);
-    ImGui::Text("");
-
-    //Search bar
-    ImGui::Separator();
-    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));            // Enlève la couleur de fond du header
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1, 1, 1, 0.1f));  // Couleur légèrement visible quand on passe la souris
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(1, 1, 1, 0.1f)); 
-    if (ImGui::CollapsingHeader("Process Table")) {
-    static char searchQuery[64] = "";
-    std::vector<Process> processes = getProcesses();
-    ImGui::Text("");
-    ImGui::Text("Filter the process by name:");
-    ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
-    //table 
-    ImGui::SetCursorPosX((50 - 10) * 0.5f);
-    if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        // Définir les en-têtes de colonnes
-        ImGui::TableSetupColumn("PID");
-        ImGui::TableSetupColumn("Name");
-        ImGui::TableSetupColumn("State");
-        ImGui::TableSetupColumn("CPU (%)");
-        ImGui::TableSetupColumn("Memory (Mb)");
-        ImGui::TableHeadersRow();
-        // Remplir le tableau avec les données des processus
-        for (const Process& process : processes) {
-            if (strstr(process.name.c_str(), searchQuery)) {
-            ImGui::TableNextRow();
-
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%d", process.pid);
-
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text("%s", process.name.c_str());
-
-            ImGui::TableSetColumnIndex(2);
-            ImGui::Text("%s", process.state.c_str());
-
-            ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%.2f", calculateCpuUsage(process.pid));
-
-            ImGui::TableSetColumnIndex(4);
-            ImGui::Text("%.f", process.memUsage/100);
-        }
-        }
-        ImGui::EndTable();
-    }
-    }
-    ImGui::PopStyleColor(3);
+    progresseBar();
+    filterTable();
     ImGui::End();
 }
 // network, display information network information
@@ -271,28 +80,32 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
     // student TODO : add code here for the network information
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0)); 
+    dateTime();
+    ImGui::Separator();
+    ImGui::Text("Ipv4 network");
+    std::vector<NetworkInterface> interfaces = getNetworkInterfaces();
+    for (const auto& iface : interfaces) {
+        ImGui::SetCursorPosX((50 - 10) * 0.5f);
+        ImGui::Text("%s: %s", iface.name.c_str(), iface.ipAddress.c_str());
+    }
+    ImGui::Separator();
     
-    time_t t;
-    time(&t);
-    // Convertir en un format lisible
-    struct tm *localTime = localtime(&t);
-    // Formater la date et l'heure en une chaîne de caractères
-    char buffer[80];
-    strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", localTime);
-    ImGui::Text( buffer);
-    ImGui::Text(getIPv4Addresses().c_str());
-    //--------------------------------------------------------------------à part 
     if (ImGui::CollapsingHeader("Network Table")) {
         ImGui::SetCursorPosX((50 - 10) * 0.5f);
-    if (ImGui::CollapsingHeader("FX")){
-
+        if (ImGui::CollapsingHeader("RX")){
+            ImGui::SetCursorPosX((50 - 10) * 0.5f);
+            displayRXStatsTable();  // You can change the interface name here
         }
-    ImGui::SetCursorPosX((50 - 10) * 0.5f);    
-    if (ImGui::CollapsingHeader("TX")){
-
+        ImGui::SetCursorPosX((50 - 10) * 0.5f);    
+        if (ImGui::CollapsingHeader("TX")){
+            ImGui::SetCursorPosX((50 - 10) * 0.5f);
+            displayTXStatsTable();  // You can change the interface name here
+        }
     }
-    }
-    ImGui::ShowDemoWindow();    
+    DisplayNetworkUsage();
+    ImGui::PopStyleColor(1);
+    //ImGui::ShowDemoWindow();  demo
     ImGui::End();
 }
 

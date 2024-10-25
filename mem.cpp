@@ -1,6 +1,22 @@
 #include "header.h"
 
 
+    auto ramUsage = getRamUsage();
+    float ramUsageRatio = ramUsage.first;
+    int totalRamInt = ramUsage.second.first;
+    std::string ramUsageText = ramUsage.second.second;
+
+    auto swapData = getSwapUsage();
+    float swapUsageRatio = swapData.first;
+    float totalSwap = swapData.second.first;  // Note que tu convertis totalSwap en int ici
+    std::string swapUsageText = swapData.second.second;
+
+    auto diskData = getDiskUsage();
+    float diskUsageRatio = diskData.first;
+    float totaldisk = diskData.second.first;  // Note que tu convertis totaldisk en int ici
+    std::string diskUsageText = diskData.second.second;
+
+
 
 // Fonction pour obtenir l'utilisation de la RAM
 std::pair<float, std::pair<int, std::string>> getRamUsage() {
@@ -29,10 +45,6 @@ std::pair<float, std::pair<float, std::string>> getSwapUsage() {
     if (sysinfo(&info) == 0) {
         // Total de la SWAP en GB
         float totalSwap = info.totalswap / (1024.0f * 1024.0f * 1024.0f);
-        
-        // Debug pour afficher la valeur brute en bytes et en GB
-        std::cout << "Total SWAP (bytes): " << info.totalswap << std::endl;
-        std::cout << "Total SWAP (GB float): " << totalSwap << std::endl;
 
         // SWAP utilisée en GB
         float usedSwap = (info.totalswap - info.freeswap) / (1024.0f * 1024.0f * 1024.0f);
@@ -169,3 +181,78 @@ double calculateCpuUsage(int pid) {
         return 0.0;
     }
 }
+
+
+void progresseBar(){
+            ImGui::Text("Physical Memory (RAM):");
+    ImGui::ProgressBar(ramUsageRatio, ImVec2(0.0f, 0.0f), ramUsageText.c_str());
+    ImGui::SameLine();
+    ImGui::Text("RAM");
+    ImGui::Text("0 Go                                                    %d Go", totalRamInt);
+    ImGui::Text("");
+
+    ImGui::Text("Virtual Memory (SWAP):");
+    ImGui::ProgressBar(swapUsageRatio, ImVec2(0.0f, 0.0f), swapUsageText.c_str());
+    ImGui::SameLine();
+    ImGui::Text("VM");
+    ImGui::Text("0 Go                                                    %2.f Go", totalSwap);
+    ImGui::Text("");
+    
+    ImGui::Text("Disk Usage:");
+    ImGui::ProgressBar(diskUsageRatio, ImVec2(0.0f, 0.0f), diskUsageText.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Disk");
+    ImGui::Text("0 Go                                                    %2.f Go", totaldisk);
+    ImGui::Text("");
+
+    }
+
+    void filterTable(){
+        
+    //Search bar
+    ImGui::Separator();
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));            // Enlève la couleur de fond du header
+    if (ImGui::CollapsingHeader("Process Table")) {
+    static char searchQuery[64] = "";
+    std::vector<Process> processes = getProcesses();
+    ImGui::Text("");
+    ImGui::SetCursorPosX((50 - 10) * 0.5f);
+    ImGui::Text("Filter the process by name:");
+    ImGui::SetCursorPosX((50 - 10) * 0.5f);
+    ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
+    //table 
+    ImGui::SetCursorPosX((50 - 10) * 0.5f);
+    if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+        // Définir les en-têtes de colonnes
+        ImGui::TableSetupColumn("PID");
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("State");
+        ImGui::TableSetupColumn("CPU (%)");
+        ImGui::TableSetupColumn("Memory (Mb)");
+        ImGui::TableHeadersRow();
+        // Remplir le tableau avec les données des processus
+        for (const Process& process : processes) {
+            if (strstr(process.name.c_str(), searchQuery)) {
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%d", process.pid);
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%s", process.name.c_str());
+
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text("%s", process.state.c_str());
+
+            ImGui::TableSetColumnIndex(3);
+            ImGui::Text("%.2f", calculateCpuUsage(process.pid));
+
+            ImGui::TableSetColumnIndex(4);
+            ImGui::Text("%.f", process.memUsage/100);
+        }
+        }
+        ImGui::EndTable();
+    }
+    }
+    ImGui::PopStyleColor(1);
+    }
