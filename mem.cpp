@@ -1,16 +1,16 @@
 #include "header.h"
 
 
-
+    
     auto ramUsage = getRamUsage();
     float ramUsageRatio = ramUsage.first;
     int totalRamInt = ramUsage.second.first;
     std::string ramUsageText = ramUsage.second.second;
 
-    auto swapData = getSwapUsage();
-    float swapUsageRatio = swapData.first;
-    float totalSwap = swapData.second.first;  // Note que tu convertis totalSwap en int ici
-    std::string swapUsageText = swapData.second.second;
+    MemoryInfo memInfo = getMemoryInfo();
+    float swapUsageRatio = memInfo.swapUsageRatio;
+    float totalSwap = memInfo.totalSwap;  // Note que tu convertis totalSwap en int ici
+    std::string swapUsageText = memInfo.swapUsageText;
 
     auto diskData = getDiskUsage();
     float diskUsageRatio = diskData.first;
@@ -41,57 +41,6 @@ std::pair<float, std::pair<int, std::string>> getRamUsage() {
     return {0.0f, {0, "0 GB / 0 GB"}}; // En cas d'erreur
 }
 
-std::pair<float, std::pair<float, std::string>> getSwapUsage() {
-    std::ifstream meminfo("/proc/meminfo");
-    std::string line;
-    float totalSwap = 0.0f;
-    float freeSwap = 0.0f;
-
-    // Lire le fichier et extraire les informations sur la swap
-    while (std::getline(meminfo, line)) {
-        // Chercher SwapTotal
-        if (line.find("SwapTotal:") == 0) {
-            totalSwap = std::stof(line.substr(line.find_first_of("0123456789")));
-            
-        } 
-        // Chercher SwapFree
-        else if (line.find("SwapFree:") == 0) {
-            freeSwap = std::stof(line.substr(line.find_first_of("0123456789")));
-            
-        }
-        
-        // Si nous avons trouvé les deux valeurs, sortir de la boucle
-        if (totalSwap > 0 && freeSwap >= 0) {
-            break;
-        }
-    }
-    std::cout << "Debug: SwapTotal = " << totalSwap << " kB" << std::endl; // Debug
-    std::cout << "Debug: SwapFree = " << freeSwap << " kB" << std::endl; // Debug
-    // Vérifier si les valeurs ont été trouvées
-    if (totalSwap <= 0) {
-        std::cerr << "Erreur: SwapTotal non trouvé ou invalide." << std::endl;
-        return {0.0f, {0.0f, "0 GB / 0 GB"}};
-    }
-    
-    // Convertir en Go
-    totalSwap /= 1024.0f; // Convertir totalSwap en Mo
-    freeSwap /= 1024.0f;  // Convertir freeSwap en Mo
-    float usedSwap = totalSwap - freeSwap; // Calculer la swap utilisée en Mo
-
-    // Convertir en Go
-    usedSwap /= 1024.0f; // Convertir usedSwap en Go
-
-    // Calculer le ratio utilisé (entre 0 et 1)
-    float swapUsageRatio = totalSwap > 0 ? usedSwap / totalSwap : 0.0f;
-
-    // Générer une chaîne de texte "X GB / Y GB"
-    std::ostringstream swapUsageText;
-    swapUsageText << std::fixed << std::setprecision(2) << usedSwap << " GB / " << totalSwap << " GB";
-
-    // Retourner le ratio, le total de la SWAP en GB et le texte
-    return {swapUsageRatio, {totalSwap, swapUsageText.str()}};
-}
-
 
 MemoryInfo getMemoryInfo() {
     std::ifstream meminfo("/proc/meminfo");
@@ -106,22 +55,14 @@ MemoryInfo getMemoryInfo() {
     // Lire le fichier et extraire les informations sur la mémoire
     while (std::getline(meminfo, line)) {
         // Debug: afficher chaque ligne lue
-        std::cout << "Debug: Ligne lue: " << line << std::endl;
 
         // Chercher SwapTotal
         if (line.find("SwapTotal:") == 0) {
             memInfo.totalSwap = std::stof(line.substr(line.find_first_of("0123456789")));
-            std::cout << "Debug: SwapTotal = " << memInfo.totalSwap << " kB" << std::endl; // Debug
         } 
         // Chercher SwapFree
         else if (line.find("SwapFree:") == 0) {
             memInfo.freeSwap = std::stof(line.substr(line.find_first_of("0123456789")));
-            std::cout << "Debug: SwapFree = " << memInfo.freeSwap << " kB" << std::endl; // Debug
-        }
-
-        // Si nous avons trouvé les deux valeurs, sortir de la boucle
-        if (memInfo.totalSwap > 0 && memInfo.freeSwap >= 0) {
-            break;
         }
     }
 
@@ -146,13 +87,11 @@ MemoryInfo getMemoryInfo() {
 
     // Générer une chaîne de texte "X GB / Y GB"
     std::ostringstream swapUsageText;
-    swapUsageText << std::fixed << std::setprecision(2) << (memInfo.usedSwap / 1024.0f) << " GB / " 
-                   << (memInfo.totalSwap / 1024.0f) << " GB";
+    swapUsageText << std::fixed << std::setprecision(2) << (memInfo.usedSwap / 1024.0f) << " GB / " << (memInfo.totalSwap / 1024.0f) << " GB";
     memInfo.swapUsageText = swapUsageText.str();
 
     return memInfo;
 }
-
 
 std::pair<float, std::pair<float, std::string>> getDiskUsage() {
     struct statvfs stat;
@@ -168,7 +107,7 @@ std::pair<float, std::pair<float, std::string>> getDiskUsage() {
         // Texte "X GB / Y GB"
         std::ostringstream diskUsageText;
         diskUsageText << std::fixed << std::setprecision(2) << usedDisk << " GB / " << totalDisk << " GB";
-
+        
         return {diskUsageRatio,{ totalDisk, diskUsageText.str()}};
     }
     return {0.0f ,{0,"0 GB / 0 GB"}}; // En cas d'erreur
@@ -243,6 +182,7 @@ ProcessCpuInfo getProcessCpuInfo(int pid) {
     file.close();
     return info;
 }
+
 double getSystemUptime() {
     std::ifstream file("/proc/uptime");
     double uptime = 0.0;
@@ -274,7 +214,8 @@ double calculateCpuUsage(int pid) {
 
 
 void progresseBar(){
-            ImGui::Text("Physical Memory (RAM):");
+    MemoryInfo memInfo = getMemoryInfo();
+    ImGui::Text("Physical Memory (RAM):");
     ImGui::ProgressBar(ramUsageRatio, ImVec2(0.0f, 0.0f), ramUsageText.c_str());
     ImGui::SameLine();
     ImGui::Text("RAM");
@@ -282,11 +223,14 @@ void progresseBar(){
     ImGui::Text("");
 
     ImGui::Text("Virtual Memory (SWAP):");
-    ImGui::ProgressBar(swapUsageRatio, ImVec2(0.0f, 0.0f), swapUsageText.c_str());
+    ImGui::ProgressBar(memInfo.swapUsageRatio, ImVec2(0.0f, 0.0f), memInfo.swapUsageText.c_str());
     ImGui::SameLine();
     ImGui::Text("VM");
-    ImGui::Text("0 Go                                                    %2.f Go", totalSwap);
-    ImGui::Text("");
+    // Affiche 0 Go sur la gauche et la mémoire totale en Go sur la droite
+    ImGui::Text("0 Go");
+    ImGui::SameLine(200); // Positionne la valeur totale un peu plus à droite
+    ImGui::Text("%.2f Go", memInfo.totalSwap / 1024); // Divise par 1024 pour convertir Mo en Go
+    ImGui::Text(""); // Ligne vide pour espacer le contenu
     
     ImGui::Text("Disk Usage:");
     ImGui::ProgressBar(diskUsageRatio, ImVec2(0.0f, 0.0f), diskUsageText.c_str());
