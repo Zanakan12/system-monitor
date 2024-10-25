@@ -144,6 +144,13 @@ struct NetworkInterface {
     TX txStats;
 };
 
+struct MemoryInfo {
+    float totalSwap;   // Total swap en Mo
+    float freeSwap;    // Free swap en Mo
+    float usedSwap;    // Used swap en Mo
+    float swapUsageRatio; // Ratio d'utilisation de swap
+    std::string swapUsageText; // Texte formaté pour l'utilisation de swap
+};
 
 extern int fps;
 extern bool animate;
@@ -191,4 +198,5 @@ void DisplayNetworkUsage();
 void displayTabBar();
 void progresseBar();
 void filterTable();
+MemoryInfo getMemoryInfo();
 #endif

@@ -1,6 +1,7 @@
 #include "header.h"
 
 
+
     auto ramUsage = getRamUsage();
     float ramUsageRatio = ramUsage.first;
     int totalRamInt = ramUsage.second.first;
@@ -41,27 +42,116 @@ std::pair<float, std::pair<int, std::string>> getRamUsage() {
 }
 
 std::pair<float, std::pair<float, std::string>> getSwapUsage() {
-    struct sysinfo info;
-    if (sysinfo(&info) == 0) {
-        // Total de la SWAP en GB
-        float totalSwap = info.totalswap / (1024.0f * 1024.0f * 1024.0f);
+    std::ifstream meminfo("/proc/meminfo");
+    std::string line;
+    float totalSwap = 0.0f;
+    float freeSwap = 0.0f;
 
-        // SWAP utilisée en GB
-        float usedSwap = (info.totalswap - info.freeswap) / (1024.0f * 1024.0f * 1024.0f);
-
-        // Calcul du ratio utilisé (entre 0 et 1)
-        float swapUsageRatio = totalSwap > 0 ? usedSwap / totalSwap : 0.0f;
-
-        // Générer une chaîne de texte "X GB / Y GB"
-        std::ostringstream swapUsageText;
-        swapUsageText << std::fixed << std::setprecision(2) << usedSwap << " GB / " << totalSwap << " GB";
-
-        // Retourner le ratio, le total de la SWAP en GB (converti en int) et le texte
-        return {swapUsageRatio, {totalSwap, swapUsageText.str()}};
+    // Lire le fichier et extraire les informations sur la swap
+    while (std::getline(meminfo, line)) {
+        // Chercher SwapTotal
+        if (line.find("SwapTotal:") == 0) {
+            totalSwap = std::stof(line.substr(line.find_first_of("0123456789")));
+            
+        } 
+        // Chercher SwapFree
+        else if (line.find("SwapFree:") == 0) {
+            freeSwap = std::stof(line.substr(line.find_first_of("0123456789")));
+            
+        }
+        
+        // Si nous avons trouvé les deux valeurs, sortir de la boucle
+        if (totalSwap > 0 && freeSwap >= 0) {
+            break;
+        }
     }
-    return {0.0f, {0, "0 GB / 0 GB"}}; // En cas d'erreur
+    std::cout << "Debug: SwapTotal = " << totalSwap << " kB" << std::endl; // Debug
+    std::cout << "Debug: SwapFree = " << freeSwap << " kB" << std::endl; // Debug
+    // Vérifier si les valeurs ont été trouvées
+    if (totalSwap <= 0) {
+        std::cerr << "Erreur: SwapTotal non trouvé ou invalide." << std::endl;
+        return {0.0f, {0.0f, "0 GB / 0 GB"}};
+    }
+    
+    // Convertir en Go
+    totalSwap /= 1024.0f; // Convertir totalSwap en Mo
+    freeSwap /= 1024.0f;  // Convertir freeSwap en Mo
+    float usedSwap = totalSwap - freeSwap; // Calculer la swap utilisée en Mo
+
+    // Convertir en Go
+    usedSwap /= 1024.0f; // Convertir usedSwap en Go
+
+    // Calculer le ratio utilisé (entre 0 et 1)
+    float swapUsageRatio = totalSwap > 0 ? usedSwap / totalSwap : 0.0f;
+
+    // Générer une chaîne de texte "X GB / Y GB"
+    std::ostringstream swapUsageText;
+    swapUsageText << std::fixed << std::setprecision(2) << usedSwap << " GB / " << totalSwap << " GB";
+
+    // Retourner le ratio, le total de la SWAP en GB et le texte
+    return {swapUsageRatio, {totalSwap, swapUsageText.str()}};
 }
 
+
+MemoryInfo getMemoryInfo() {
+    std::ifstream meminfo("/proc/meminfo");
+    std::string line;
+    MemoryInfo memInfo = {0.0f, 0.0f, 0.0f, 0.0f, "0 GB / 0 GB"};
+
+    if (!meminfo.is_open()) {
+        std::cerr << "Erreur: Impossible d'ouvrir /proc/meminfo." << std::endl;
+        return memInfo; // Retourner des valeurs par défaut
+    }
+
+    // Lire le fichier et extraire les informations sur la mémoire
+    while (std::getline(meminfo, line)) {
+        // Debug: afficher chaque ligne lue
+        std::cout << "Debug: Ligne lue: " << line << std::endl;
+
+        // Chercher SwapTotal
+        if (line.find("SwapTotal:") == 0) {
+            memInfo.totalSwap = std::stof(line.substr(line.find_first_of("0123456789")));
+            std::cout << "Debug: SwapTotal = " << memInfo.totalSwap << " kB" << std::endl; // Debug
+        } 
+        // Chercher SwapFree
+        else if (line.find("SwapFree:") == 0) {
+            memInfo.freeSwap = std::stof(line.substr(line.find_first_of("0123456789")));
+            std::cout << "Debug: SwapFree = " << memInfo.freeSwap << " kB" << std::endl; // Debug
+        }
+
+        // Si nous avons trouvé les deux valeurs, sortir de la boucle
+        if (memInfo.totalSwap > 0 && memInfo.freeSwap >= 0) {
+            break;
+        }
+    }
+
+    // Vérifier si SwapTotal a été trouvé
+    if (memInfo.totalSwap <= 0) {
+        std::cerr << "Erreur: SwapTotal non trouvé ou invalide." << std::endl;
+        return memInfo; // Retourner des valeurs par défaut
+    }
+
+    // Conversion en Mo
+    memInfo.totalSwap /= 1024.0f; // Convertir totalSwap en Mo
+    memInfo.freeSwap /= 1024.0f;  // Convertir freeSwap en Mo
+    memInfo.usedSwap = memInfo.totalSwap - memInfo.freeSwap; // Calculer la swap utilisée en Mo
+
+    // Vérifier si usedSwap est négatif et le corriger
+    if (memInfo.usedSwap < 0) {
+        memInfo.usedSwap = 0.0f; // Assurez-vous que usedSwap ne soit pas négatif
+    }
+
+    // Calculer le ratio d'utilisation de swap
+    memInfo.swapUsageRatio = memInfo.totalSwap > 0 ? memInfo.usedSwap / memInfo.totalSwap : 0.0f;
+
+    // Générer une chaîne de texte "X GB / Y GB"
+    std::ostringstream swapUsageText;
+    swapUsageText << std::fixed << std::setprecision(2) << (memInfo.usedSwap / 1024.0f) << " GB / " 
+                   << (memInfo.totalSwap / 1024.0f) << " GB";
+    memInfo.swapUsageText = swapUsageText.str();
+
+    return memInfo;
+}
 
 
 std::pair<float, std::pair<float, std::string>> getDiskUsage() {

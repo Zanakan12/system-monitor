@@ -107,6 +107,13 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::PopStyleColor(1);
     //ImGui::ShowDemoWindow();  demo
     ImGui::End();
+    MemoryInfo memInfo = getMemoryInfo();
+    std::cout << "Total Swap: " << memInfo.totalSwap << " Mo" << std::endl;
+    std::cout << "Free Swap: " << memInfo.freeSwap << " Mo" << std::endl;
+    std::cout << "Used Swap: " << memInfo.usedSwap << " Mo" << std::endl;
+    std::cout << "Usage Ratio: " << memInfo.swapUsageRatio * 100 << " %" << std::endl;
+    std::cout << "Formatted Usage: " << memInfo.swapUsageText << std::endl;
+
 }
 
 // Main code
