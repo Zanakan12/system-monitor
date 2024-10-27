@@ -1,6 +1,17 @@
 #include "header.h"
 
 
+    
+    auto ramUsage = getRamUsage();
+    float ramUsageRatio = ramUsage.first;
+    int totalRamInt = ramUsage.second.first;
+    std::string ramUsageText = ramUsage.second.second;
+
+    MemoryInfo memInfo = getMemoryInfo();
+    float swapUsageRatio = memInfo.swapUsageRatio;
+    float totalSwap = memInfo.totalSwap;  // Note que tu convertis totalSwap en int ici
+    std::string swapUsageText = memInfo.swapUsageText;
+
 
 // Fonction pour obtenir l'utilisation de la RAM
 std::pair<float, std::pair<int, std::string>> getRamUsage() {
@@ -24,52 +35,65 @@ std::pair<float, std::pair<int, std::string>> getRamUsage() {
     return {0.0f, {0, "0 GB / 0 GB"}}; // En cas d'erreur
 }
 
-std::pair<float, std::pair<float, std::string>> getSwapUsage() {
-    struct sysinfo info;
-    if (sysinfo(&info) == 0) {
-        // Total de la SWAP en GB
-        float totalSwap = info.totalswap / (1024.0f * 1024.0f * 1024.0f);
-        
-        // Debug pour afficher la valeur brute en bytes et en GB
-        std::cout << "Total SWAP (bytes): " << info.totalswap << std::endl;
-        std::cout << "Total SWAP (GB float): " << totalSwap << std::endl;
 
-        // SWAP utilisée en GB
-        float usedSwap = (info.totalswap - info.freeswap) / (1024.0f * 1024.0f * 1024.0f);
+MemoryInfo getMemoryInfo() {
+    std::ifstream meminfo("/proc/meminfo");
+    std::string line;
+    MemoryInfo memInfo = {0.0f, 0.0f, 0.0f, 0.0f, "0 GB / 0 GB", 0.0f, 0.0f, 0.0f, "0 GB / 0 GB"};
 
-        // Calcul du ratio utilisé (entre 0 et 1)
-        float swapUsageRatio = totalSwap > 0 ? usedSwap / totalSwap : 0.0f;
-
-        // Générer une chaîne de texte "X GB / Y GB"
-        std::ostringstream swapUsageText;
-        swapUsageText << std::fixed << std::setprecision(2) << usedSwap << " GB / " << totalSwap << " GB";
-
-        // Retourner le ratio, le total de la SWAP en GB (converti en int) et le texte
-        return {swapUsageRatio, {totalSwap, swapUsageText.str()}};
+    if (!meminfo.is_open()) {
+        std::cerr << "Erreur: Impossible d'ouvrir /proc/meminfo." << std::endl;
+        return memInfo; // Retourner des valeurs par défaut
     }
-    return {0.0f, {0, "0 GB / 0 GB"}}; // En cas d'erreur
-}
 
+    while (std::getline(meminfo, line)) {
+        // Lire les valeurs de RAM
+        if (line.find("MemTotal:") == 0) {
+            memInfo.totalRAM = std::stof(line.substr(line.find_first_of("0123456789")));
+        } else if (line.find("MemAvailable:") == 0) {
+            memInfo.availableRAM = std::stof(line.substr(line.find_first_of("0123456789")));
+        }
+        // Lire les valeurs de SWAP
+        else if (line.find("SwapTotal:") == 0) {
+            memInfo.totalSwap = std::stof(line.substr(line.find_first_of("0123456789")));
+        } else if (line.find("SwapFree:") == 0) {
+            memInfo.freeSwap = std::stof(line.substr(line.find_first_of("0123456789")));
+        }
+    }
 
+    // Calcul de l'utilisation de la RAM
+    memInfo.totalRAM /= 1024.0f;         // Convertir en Mo
+    memInfo.availableRAM /= 1024.0f;     // Convertir en Mo
+    float usedRAM = memInfo.totalRAM - memInfo.availableRAM;
+    memInfo.ramUsageRatio = usedRAM / memInfo.totalRAM;
 
-std::pair<float, std::pair<float, std::string>> getDiskUsage() {
-    struct statvfs stat;
-    if (statvfs("/", &stat) == 0) {
-        // Total du disque en GB
-        float totalDisk = (stat.f_blocks * stat.f_frsize) / (1024.0f * 1024.0f * 1024.0f);
-        // Espace utilisé en GB
-        float usedDisk = ((stat.f_blocks - stat.f_bfree) * stat.f_frsize) / (1024.0f * 1024.0f * 1024.0f);
+    std::ostringstream ramUsageText;
+    ramUsageText << std::fixed << std::setprecision(2) << (usedRAM / 1024.0f) << " GB / " << (memInfo.totalRAM / 1024.0f) << " GB";
+    memInfo.ramUsageText = ramUsageText.str();
 
-        // Calcul du ratio utilisé (entre 0 et 1)
-        float diskUsageRatio = usedDisk / totalDisk;
+    // Calcul de l'utilisation de SWAP
+    memInfo.totalSwap /= 1024.0f;         // Convertir en Mo
+    memInfo.freeSwap /= 1024.0f;          // Convertir en Mo
+    memInfo.usedSwap = memInfo.totalSwap - memInfo.freeSwap;
+    memInfo.swapUsageRatio = memInfo.usedSwap / memInfo.totalSwap;
 
-        // Texte "X GB / Y GB"
+    std::ostringstream swapUsageText;
+    swapUsageText << std::fixed << std::setprecision(2) << (memInfo.usedSwap / 1024.0f) << " GB / " << (memInfo.totalSwap / 1024.0f) << " GB";
+    memInfo.swapUsageText = swapUsageText.str();
+    struct statvfs diskInfo;
+    if (statvfs("/", &diskInfo) == 0) { // "/" pour le système de fichiers racine
+        float totalDisk = diskInfo.f_blocks * diskInfo.f_frsize / (1024.0f * 1024.0f * 1024.0f); // En Go
+        float freeDisk = diskInfo.f_bfree * diskInfo.f_frsize / (1024.0f * 1024.0f * 1024.0f);   // En Go
+        float usedDisk = totalDisk - freeDisk;
+        memInfo.totalDisk = totalDisk;
+        memInfo.usedDisk = usedDisk;
+        memInfo.diskUsageRatio = usedDisk / totalDisk;
+
         std::ostringstream diskUsageText;
         diskUsageText << std::fixed << std::setprecision(2) << usedDisk << " GB / " << totalDisk << " GB";
-
-        return {diskUsageRatio,{ totalDisk, diskUsageText.str()}};
+        memInfo.diskUsageText = diskUsageText.str();
     }
-    return {0.0f ,{0,"0 GB / 0 GB"}}; // En cas d'erreur
+    return memInfo;
 }
 
 
@@ -77,30 +101,67 @@ std::vector<Process> getProcesses() {
     DIR* dir = opendir("/proc");
     struct dirent* entry;
     std::vector<Process> processes;
+    long clkTck = sysconf(_SC_CLK_TCK);  // Nombre de ticks par seconde
+    struct sysinfo memInfo;
+    sysinfo(&memInfo);
+    long totalMemory = memInfo.totalram / 1024;  // Mémoire totale en Ko
+
+    // Lire le uptime pour calculer le CPU
+    double uptime;
+    std::ifstream uptimeFile("/proc/uptime");
+    if (uptimeFile) uptimeFile >> uptime;
+
     while ((entry = readdir(dir)) != nullptr) {
-        // Si l'entrée est un dossier avec un nom numérique (ce qui signifie qu'il s'agit d'un processus)
         if (entry->d_type == DT_DIR && isdigit(entry->d_name[0])) {
             int pid = std::stoi(entry->d_name);
             std::string statusFilePath = "/proc/" + std::to_string(pid) + "/status";
-            
-            // Lire le fichier /proc/[pid]/status pour obtenir des informations sur le processus
+            std::string statFilePath = "/proc/" + std::to_string(pid) + "/stat";
+
+            // Lire le fichier /proc/[pid]/status pour obtenir des informations de base sur le processus
             std::ifstream statusFile(statusFilePath);
             if (statusFile) {
                 Process process;
                 process.pid = pid;
                 std::string line;
 
-                // Lire les lignes du fichier status pour extraire les informations nécessaires
+                // Lire les lignes du fichier status pour extraire les informations
                 while (std::getline(statusFile, line)) {
                     if (line.find("Name:") == 0) {
-                        process.name = line.substr(6);  // Nom du processus
+                        process.name = line.substr(6);
                     } else if (line.find("State:") == 0) {
-                        process.state = line.substr(7, 1);  // État du processus
-                    } else if (line.find("VmSize:") == 0) {
+                        process.state = line[7];
+                    } else if (line.find("VmRSS:") == 0) {
                         std::istringstream iss(line.substr(8));
-                        iss >> process.memUsage;  // Utilisation de la mémoire (en ko)
+                        double memUsageKb;
+                        iss >> memUsageKb;
+                        process.memUsage = (memUsageKb / totalMemory) * 100.0;  // En pourcentage de la mémoire physique
                     }
                 }
+
+                // Lire le fichier /proc/[pid]/stat pour calculer l'utilisation du CPU
+                std::ifstream statFile(statFilePath);
+                if (statFile) {
+                    std::string statLine;
+                    std::getline(statFile, statLine);
+                    std::istringstream statStream(statLine);
+                    std::string token;
+                    int field = 1;
+                    long utime, stime, starttime;
+
+                    // Extraire les valeurs utime, stime, starttime
+                    while (statStream >> token) {
+                        if (field == 14) utime = std::stol(token);
+                        else if (field == 15) stime = std::stol(token);
+                        else if (field == 22) starttime = std::stol(token);
+                        field++;
+                    }
+
+                    // Calcul du temps total d'utilisation CPU du processus
+                    double totalTime = (utime + stime) / static_cast<double>(clkTck);
+                    double processUptime = uptime - (starttime / static_cast<double>(clkTck));
+                    process.cpuUsage = (totalTime / processUptime) * 100.0;
+                }
+
                 processes.push_back(process);
             }
         }
@@ -141,6 +202,7 @@ ProcessCpuInfo getProcessCpuInfo(int pid) {
     file.close();
     return info;
 }
+
 double getSystemUptime() {
     std::ifstream file("/proc/uptime");
     double uptime = 0.0;
@@ -168,4 +230,108 @@ double calculateCpuUsage(int pid) {
     } else {
         return 0.0;
     }
+}
+
+
+void progresseBar(){
+    MemoryInfo memInfo = getMemoryInfo();
+
+    // Affichage de l'utilisation de la RAM
+    ImGui::Text("Physical Memory (RAM):");
+    ImGui::ProgressBar(memInfo.ramUsageRatio, ImVec2(0.0f, 0.0f), memInfo.ramUsageText.c_str());
+    ImGui::SameLine();
+    ImGui::Text("RAM");
+    ImGui::Text("0 Go");
+    ImGui::SameLine(600);
+    ImGui::Text("%.2f Go", memInfo.totalRAM / 1024.0f);
+    ImGui::Text("");
+
+    // Affichage de l'utilisation de la SWAP
+    ImGui::Text("Virtual Memory (SWAP):");
+    ImGui::ProgressBar(memInfo.swapUsageRatio, ImVec2(0.0f, 0.0f), memInfo.swapUsageText.c_str());
+    ImGui::SameLine();
+    ImGui::Text("VM");
+    ImGui::Text("0 Go");
+    ImGui::SameLine(600);
+    ImGui::Text("%.2f Go", memInfo.totalSwap / 1024.0f);
+    ImGui::Text("");
+
+    // Affichage de l'utilisation du disque
+    ImGui::Text("Disk Usage:");
+    ImGui::ProgressBar(memInfo.diskUsageRatio, ImVec2(0.0f, 0.0f), memInfo.diskUsageText.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Disk");
+    ImGui::Text("0 Go");
+    ImGui::SameLine(600);
+    ImGui::Text("%.2f Go", memInfo.totalDisk); // Total disque en Go
+    ImGui::Text("");
+
+    }
+
+void filterTable() {
+    ImGui::Separator();
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));
+    if (ImGui::CollapsingHeader("Process Table")) {
+        static char searchQuery[64] = "";
+        static std::set<int> selectedPIDs; // Ensemble pour les PIDs sélectionnés
+        std::vector<Process> processes = getProcesses(); // Récupérer la liste des processus
+
+        // Champ de recherche
+        ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
+
+        // Création du tableau
+        if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+            ImGui::TableSetupColumn("PID");
+            ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("State");
+            ImGui::TableSetupColumn("CPU (%)");
+            ImGui::TableSetupColumn("Memory (Mb)");
+            ImGui::TableHeadersRow();
+
+            for (const Process& process : processes) {
+                // Filtre de recherche
+                if (strstr(process.name.c_str(), searchQuery)) {
+                    ImGui::TableNextRow();
+
+                    // Vérifiez si le PID est sélectionné
+                    bool isSelected = selectedPIDs.count(process.pid) > 0; 
+                    if (isSelected) {
+                        // Définir une couleur de fond verte pour les éléments sélectionnés
+                        ImU32 bgColor = IM_COL32(0, 255, 0, 128); // Couleur verte avec alpha
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bgColor, true);
+                    }
+
+                    // Afficher le PID avec une sélection
+                    ImGui::TableSetColumnIndex(0);
+                    if (ImGui::Selectable(std::to_string(process.pid).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns)) {
+                        // Ajouter ou retirer le PID de l'ensemble
+                        if (isSelected) {
+                            selectedPIDs.erase(process.pid); // Retirer le PID
+                        } else {
+                            selectedPIDs.insert(process.pid); // Ajouter le PID
+                        }
+
+                        // Débogage : afficher les PIDs sélectionnés
+                        std::cout << "Selected PIDs: ";
+                        for (const auto& pid : selectedPIDs) {
+                            std::cout << pid << " ";
+                        }
+                        std::cout << std::endl; // Nouvelle ligne pour une meilleure lisibilité
+                    }
+
+                    // Affichage des autres colonnes
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::Text("%s", process.name.c_str());
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::Text("%s", process.state.c_str());
+                    ImGui::TableSetColumnIndex(3);
+                    ImGui::Text("%.1f", process.cpuUsage);
+                    ImGui::TableSetColumnIndex(4);
+                    ImGui::Text("%.1f", process.memUsage);
+                }
+            }
+            ImGui::EndTable();
+        }
+    }
+    ImGui::PopStyleColor(1);
 }
