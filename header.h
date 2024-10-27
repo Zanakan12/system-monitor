@@ -145,11 +145,28 @@ struct NetworkInterface {
 };
 
 struct MemoryInfo {
-    float totalSwap;   // Total swap en Mo
-    float freeSwap;    // Free swap en Mo
-    float usedSwap;    // Used swap en Mo
-    float swapUsageRatio; // Ratio d'utilisation de swap
-    std::string swapUsageText; // Texte formaté pour l'utilisation de swap
+    float totalSwap;
+    float freeSwap;
+    float usedSwap;
+    float swapUsageRatio;
+    std::string swapUsageText;
+    float totalRAM;
+    float availableRAM;
+    float ramUsageRatio;
+    std::string ramUsageText;
+    float totalDisk;         // Taille totale du disque en Go
+    float usedDisk;          // Espace disque utilisé en Go
+    float diskUsageRatio;    // Ratio d'utilisation du disque
+    std::string diskUsageText; // Texte formaté pour l'utilisation du disque
+};
+
+struct DiskInfo {
+    std::string mountPoint;
+    float totalSpace;
+    float freeSpace;
+    float usedSpace;
+    float usageRatio;
+    std::string usageText;
 };
 
 extern int fps;
@@ -183,7 +200,6 @@ double getSystemUptime();
 double calculateCpuUsage(int pid);
 std::vector<Process> getProcesses();
 std::pair<float, std::pair<int, std::string>> getRamUsage();
-std::pair<float, std::pair<float, std::string>> getDiskUsage();
 std::pair<float, std::pair<float, std::string>> getSwapUsage();
 void displaySysInfo();
 // student TODO : network

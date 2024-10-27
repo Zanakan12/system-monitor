@@ -284,7 +284,6 @@ void displayTabBar(){
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Fan")) {
-            usleep(1000000 / fps);
             // Réinitialiser les données à chaque changement d'onglet
             if (dataCount == 0) {
                 std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
