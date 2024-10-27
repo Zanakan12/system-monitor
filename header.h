@@ -3,6 +3,9 @@
 #define header_H
 
 
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include <iomanip>
 #include <unistd.h>  // Pour sysconf(_SC_CLK_TCK)
 #include <algorithm>
@@ -101,34 +104,69 @@ struct Networks
 
 struct TX
 {
-    int bytes;
-    int packets;
-    int errs;
-    int drop;
-    int fifo;
-    int frame;
-    int compressed;
-    int multicast;
+    long long bytes;
+    long long packets;
+    long long errs;
+    long long drop;
+    long long fifo;
+    long long frame;
+    long long compressed;
+    long long multicast;
 };
 
 struct RX
 {
-    int bytes;
-    int packets;
-    int errs;
-    int drop;
-    int fifo;
-    int colls;
-    int carrier;
-    int compressed;
+    long long bytes;
+    long long packets;
+    long long errs;
+    long long drop;
+    long long fifo;
+    long long colls;
+    long long carrier;
+    long long compressed;
 };
-
+struct NetworkUsage {
+    float rx_gb;
+    float tx_gb;
+};
 struct Process {
     int pid;
     std::string name;
     std::string state;
     float cpuUsage;  // Tu peux ajouter une logique plus tard pour calculer l'usage CPU
     float memUsage;  // Tu peux ajouter une logique plus tard pour calculer l'usage mémoire
+};
+
+struct NetworkInterface {
+    std::string name;
+    std::string ipAddress;
+    RX rxStats;
+    TX txStats;
+};
+
+struct MemoryInfo {
+    float totalSwap;
+    float freeSwap;
+    float usedSwap;
+    float swapUsageRatio;
+    std::string swapUsageText;
+    float totalRAM;
+    float availableRAM;
+    float ramUsageRatio;
+    std::string ramUsageText;
+    float totalDisk;         // Taille totale du disque en Go
+    float usedDisk;          // Espace disque utilisé en Go
+    float diskUsageRatio;    // Ratio d'utilisation du disque
+    std::string diskUsageText; // Texte formaté pour l'utilisation du disque
+};
+
+struct DiskInfo {
+    std::string mountPoint;
+    float totalSpace;
+    float freeSpace;
+    float usedSpace;
+    float usageRatio;
+    std::string usageText;
 };
 
 extern int fps;
@@ -161,10 +199,20 @@ ProcessCpuInfo getProcessCpuInfo(int pid);
 double getSystemUptime();
 double calculateCpuUsage(int pid);
 std::vector<Process> getProcesses();
-std::string getIPv4Addresses();
 std::pair<float, std::pair<int, std::string>> getRamUsage();
-std::pair<float, std::pair<float, std::string>> getDiskUsage();
 std::pair<float, std::pair<float, std::string>> getSwapUsage();
+void displaySysInfo();
 // student TODO : network
-
+void dateTime();
+std::string getIPAddress(const std::string& interface);
+void displayTXStatsTable();
+void displayRXStatsTable();
+std::vector<NetworkInterface> getNetworkInterfaces();
+std::vector<NetworkInterface> getNetworkStats();
+void readSpecificNetworkDev(const std::string& interface);
+void DisplayNetworkUsage();
+void displayTabBar();
+void progresseBar();
+void filterTable();
+MemoryInfo getMemoryInfo();
 #endif
