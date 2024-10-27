@@ -234,7 +234,7 @@ void DisplayNetworkUsage() {
             }
             ImGui::EndTabItem();
         }
-
+        ImGui::Text("rappel la conversion est parfaite,\n la commande ifconfig ne fait pas de conversion.\n");
         ImGui::EndTabBar();
     }
 }
