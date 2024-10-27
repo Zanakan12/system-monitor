@@ -242,7 +242,7 @@ void progresseBar(){
     ImGui::SameLine();
     ImGui::Text("RAM");
     ImGui::Text("0 Go");
-    ImGui::SameLine(400);
+    ImGui::SameLine(600);
     ImGui::Text("%.2f Go", memInfo.totalRAM / 1024.0f);
     ImGui::Text("");
 
@@ -252,7 +252,7 @@ void progresseBar(){
     ImGui::SameLine();
     ImGui::Text("VM");
     ImGui::Text("0 Go");
-    ImGui::SameLine(400);
+    ImGui::SameLine(600);
     ImGui::Text("%.2f Go", memInfo.totalSwap / 1024.0f);
     ImGui::Text("");
 
@@ -262,59 +262,76 @@ void progresseBar(){
     ImGui::SameLine();
     ImGui::Text("Disk");
     ImGui::Text("0 Go");
-    ImGui::SameLine(400);
+    ImGui::SameLine(600);
     ImGui::Text("%.2f Go", memInfo.totalDisk); // Total disque en Go
     ImGui::Text("");
 
     }
 
-    void filterTable(){
-        
-    //Search bar
+void filterTable() {
     ImGui::Separator();
-    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));            // Enlève la couleur de fond du header
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));
     if (ImGui::CollapsingHeader("Process Table")) {
-    static char searchQuery[64] = "";
-    std::vector<Process> processes = getProcesses();
-    ImGui::Text("");
-    ImGui::SetCursorPosX((50 - 10) * 0.5f);
-    ImGui::Text("Filter the process by name:");
-    ImGui::SetCursorPosX((50 - 10) * 0.5f);
-    ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
-    //table 
-    ImGui::SetCursorPosX((50 - 10) * 0.5f);
-    if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        // Définir les en-têtes de colonnes
-        ImGui::TableSetupColumn("PID");
-        ImGui::TableSetupColumn("Name");
-        ImGui::TableSetupColumn("State");
-        ImGui::TableSetupColumn("CPU (%)");
-        ImGui::TableSetupColumn("Memory (Mb)");
-        ImGui::TableHeadersRow();
-        // Remplir le tableau avec les données des processus
-        for (const Process& process : processes) {
-            if (strstr(process.name.c_str(), searchQuery)) {
-            
-            ImGui::TableNextRow();
+        static char searchQuery[64] = "";
+        static std::set<int> selectedPIDs; // Ensemble pour les PIDs sélectionnés
+        std::vector<Process> processes = getProcesses(); // Récupérer la liste des processus
 
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%d", process.pid);
+        // Champ de recherche
+        ImGui::InputText("Search", searchQuery, IM_ARRAYSIZE(searchQuery));
 
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text("%s", process.name.c_str());
+        // Création du tableau
+        if (ImGui::BeginTable("ProcessesTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+            ImGui::TableSetupColumn("PID");
+            ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("State");
+            ImGui::TableSetupColumn("CPU (%)");
+            ImGui::TableSetupColumn("Memory (Mb)");
+            ImGui::TableHeadersRow();
 
-            ImGui::TableSetColumnIndex(2);
-            ImGui::Text("%s", process.state.c_str());
+            for (const Process& process : processes) {
+                // Filtre de recherche
+                if (strstr(process.name.c_str(), searchQuery)) {
+                    ImGui::TableNextRow();
 
-            ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%.1f", process.cpuUsage);
+                    // Vérifiez si le PID est sélectionné
+                    bool isSelected = selectedPIDs.count(process.pid) > 0; 
+                    if (isSelected) {
+                        // Définir une couleur de fond verte pour les éléments sélectionnés
+                        ImU32 bgColor = IM_COL32(0, 255, 0, 128); // Couleur verte avec alpha
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bgColor, true);
+                    }
 
-            ImGui::TableSetColumnIndex(4);
-            ImGui::Text("%.1f", process.memUsage);
+                    // Afficher le PID avec une sélection
+                    ImGui::TableSetColumnIndex(0);
+                    if (ImGui::Selectable(std::to_string(process.pid).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns)) {
+                        // Ajouter ou retirer le PID de l'ensemble
+                        if (isSelected) {
+                            selectedPIDs.erase(process.pid); // Retirer le PID
+                        } else {
+                            selectedPIDs.insert(process.pid); // Ajouter le PID
+                        }
+
+                        // Débogage : afficher les PIDs sélectionnés
+                        std::cout << "Selected PIDs: ";
+                        for (const auto& pid : selectedPIDs) {
+                            std::cout << pid << " ";
+                        }
+                        std::cout << std::endl; // Nouvelle ligne pour une meilleure lisibilité
+                    }
+
+                    // Affichage des autres colonnes
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::Text("%s", process.name.c_str());
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::Text("%s", process.state.c_str());
+                    ImGui::TableSetColumnIndex(3);
+                    ImGui::Text("%.1f", process.cpuUsage);
+                    ImGui::TableSetColumnIndex(4);
+                    ImGui::Text("%.1f", process.memUsage);
+                }
+            }
+            ImGui::EndTable();
         }
-        }
-        ImGui::EndTable();
-    }
     }
     ImGui::PopStyleColor(1);
-    }
+}

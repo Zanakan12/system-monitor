@@ -156,7 +156,7 @@ std::string readFile(const std::string& filePath)
 // Function to get temperature
 std::string getTemperature()
 {
-    return readFile("/sys/class/thermal/thermal_zone0/temp");
+    return readFile("/sys/class/thermal/thermal_zone3/temp");
 }
 
 void updateTemperatureData(float newTemperature)
@@ -258,7 +258,6 @@ void displaySysInfo(){
 void displayTabBar(){
         if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None)) {
         if (ImGui::BeginTabItem("CPU")) {
-            usleep(1000000 / fps);
             // Réinitialiser les données à chaque changement d'onglet
             if (dataCount == 0) {
                 std::fill(std::begin(Data), std::end(Data), 0.0f); // Ne pas effacer si déjà rempli
@@ -344,8 +343,9 @@ void displayTabBar(){
             ImGui::SliderInt("FPS", &fps, 1, 60);
             ImGui::SliderFloat("Scale Max", &scalemax, 1, 100);
             // Affichage du graphique avec les données accumulées
-            usleep(1000000 / fps);
+            
             ImGui::PlotLines(item1.c_str(), Data, dataCount, Index, graphTitle.c_str(), 0.0f, scalemax, ImVec2(0, 180));
+            usleep(1000000 / fps);
         }
 
         ImGui::EndTabBar();
