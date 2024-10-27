@@ -294,6 +294,7 @@ void progresseBar(){
         // Remplir le tableau avec les données des processus
         for (const Process& process : processes) {
             if (strstr(process.name.c_str(), searchQuery)) {
+            
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
@@ -306,7 +307,7 @@ void progresseBar(){
             ImGui::Text("%s", process.state.c_str());
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%.1f", calculateCpuUsage(process.pid));
+            ImGui::Text("%.1f", process.cpuUsage);
 
             ImGui::TableSetColumnIndex(4);
             ImGui::Text("%.1f", process.memUsage);
